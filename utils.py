@@ -63,36 +63,39 @@ def process_text_message(text_message, page):
     text_field.click()
     text_field.fill(text_message)
 
-def get_display_numbers(users, selected_category):
-    return [
-        {
-            "number": getattr(user, "phone"),
-            "name": getattr(user, "name"),
-            "status": getattr(user, "status"),
-        }
-        for user in users if user.category == selected_category
-    ]
+def get_processed_numbers(users, selected_category):
+        return [
+            {
+                "number": getattr(user, "phone"),
+                "name": getattr(user, "name"),
+                "status": getattr(user, "status"),
+            }
+            for user in users if user.category == selected_category
+        ]
 
 def counter_statuses(contacts, selected_category=None):
     return dict(Counter([contact.status for contact in contacts if contact.category == selected_category]))
 
 
-def update_image_length():
-    selected_category = session.get("selected_category")
-    if selected_category:
-        length = len(db.get_phones_by_category(selected_category))
-    else:
-        length = 0
-    return length
-
 
 def init_session():
     session["image_directory_path"] = read_image()
     session["text_message"] = session.get("text_message", "")
+    session["categories"] = db.get_phones_categories()
     session["selected_category"] = session.get("selected_category", None)
     g.data = db.get_all_users() or []
-    session["categories"] = db.get_phones_categories()
-    session["length"] = update_image_length()
+    session["list_numbers"] = get_processed_numbers(g.data, session["selected_category"])
+    session["length"] = len(session["list_numbers"])
+
+    if session["selected_category"]:
+        filtered_contacts = [
+            c for c in g.data if c.category == session["selected_category"]
+        ]
+    else:
+        filtered_contacts = g.data
+
+    session["list_numbers"] = get_processed_numbers(g.data, session["selected_category"])
+    g.filtered_contacts = filtered_contacts
 
 
 def change_status(phone, status):

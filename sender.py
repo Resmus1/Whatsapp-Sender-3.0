@@ -1,6 +1,7 @@
 from playwright.sync_api import Playwright
 from database import db
 from utils import process_text_message
+import time
 
 
 def open_whatsapp(playwright: Playwright):
@@ -21,7 +22,9 @@ def open_whatsapp(playwright: Playwright):
 def send_message(contact, picture_path, text_message, search_box, page):
     search_box.click()
     search_box.fill(contact.phone)
+    time.sleep(200)
     search_box.press("Enter")
+
 
     if contact.name == None:
         try:
@@ -38,7 +41,7 @@ def send_message(contact, picture_path, text_message, search_box, page):
 
     process_text_message(text_message, page)
 
-    page.get_by_role("button", name="Отправить").click()
+    # page.get_by_role("button", name="Отправить").click()
     page.wait_for_timeout(1000)
     db.update_status(contact.phone, "sent")
 

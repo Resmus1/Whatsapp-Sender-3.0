@@ -31,7 +31,7 @@ def on_exit():
     db.reset_sent_statuses()
 
 
-@app.route("/reset_statuses", methods=["GET"])
+@app.route("/reset_statuses", methods=["GET"]) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def reset_statuses():
     logger.info("Сброс статусов пользователей")
     db.reset_sent_statuses()
@@ -61,7 +61,7 @@ def index():
         image_directory_path=session["image_directory_path"],
         length=session["length"],
         sent_message=session.get("text_message"),
-        numbers=utils.get_display_numbers(g.data, selected_category),
+        numbers=session["list_numbers"],
         **utils.counter_statuses(g.data, selected_category)
     )
 
@@ -72,22 +72,33 @@ def start():
         page = open_whatsapp(playwright)
         try:
             logger.info("Начало отправки сообщений через WhatsApp")
+            new_chat_button = page.wait_for_selector(
+                '[data-icon="new-chat-outline"]', timeout=15000)
+            new_chat_button.click()
             search_box = page.get_by_role(
-                "textbox", name="Текстовое поле поиска")
+                "textbox", name="Поиск по имени или номеру")
             search_box.wait_for(timeout=15000)
             picture_path = Path(app.config["UPLOAD_FOLDER"]) / "picture.jpg"
 
-            if all(contact.status == "sent" for contact in g.data):
-                return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
+            # if all(contact.status == "sent" for contact in g.data):
+            #     return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
 
-            for contact in g.data:
+            contacts_to_send = (
+                [c for c in g.data if c.category ==
+                    session["selected_category"] and c.status == "pending"]
+                if session["selected_category"] else g.data
+            )
+
+            for contact in g.filtered_contacts:
+                print(contact)
                 logger.debug(f"Отправка сообщения контакту: {contact.phone}")
                 if contact.status == "pending":
                     send_message(
                         contact,
                         picture_path,
                         session["text_message"],
-                        search_box, page
+                        search_box,
+                        page,
                     )
 
             g.data = db.get_all_users()
