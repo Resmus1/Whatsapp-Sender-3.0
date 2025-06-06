@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Главная страница{% endblock %}
+
+{% block left %}
+<h5 class="mb-3">📋 Управление</h5>
+<div class="row">
+    <div class="col-md-12">
+        <form action="/start" method="get">
+            <button type="submit" class="btn btn-primary w-100">▶️ Start</button>
+        </form>
+    </div>
+
+    <div class="col-md-5 d-flex align-items-center py-1">
+        <span class="badge bg-success">Отправлено: {{ sent or 0 }}</span>
+        <span class="badge bg-warning text-dark">Ожидает: {{ pending or 0 }}</span>
+        <span class="badge bg-danger">Ошибок: {{ error or 0 }}</span>
+    </div>
+
+    <div class="col-md-7 d-flex align-items-center py-1 ps-3">
+        {% if message %}
+        <p class="text-info m-0 small" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            {{ message }}
+        </p>
+        {% endif %}
+        {% if error %}
+        <p class="text-danger m-0 small">Ошибка: {{ error }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="row">
+            <div class="col-md-12">
+                <p class="m-0">Сообщение:</p>
+            </div>
+            <div class="col-md-5 border rounded ms-2 p-1 text-center">
+                {% if image_directory_path %}
+                <img src="{{ image_directory_path }}" class="img-fluid" alt="Картинка">
+                {% else %}
+                <p>Нет изображения.</p>
+                {% endif %}
+
+                {% if sent_message %}
+                <p class="text-success small m-0">
+                    {{ sent_message[:10] ~ '...' if sent_message|length > 10 else sent_message }}
+                </p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <p class="m-0">Расширить превью или добавить настройку</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="row">
+            <form action="/reset_statuses" method="get" class="mb-1">
+                <button type="submit" class="btn btn-danger w-100">🔄 Сбросить статусы</button>
+            </form>
+        </div>
+        <div>
+            <form action="/text" method="post" enctype="multipart/form-data" class="mb-2" id="textForm">
+                <label for="text" class="form-label">💬 Введите сообщение</label>
+                <div class="mb-2">
+                    <textarea name="text" id="text" class="form-control textarea_message" maxlength="1000"
+                        placeholder="Введите текст...">{{ session.get('text_message') }}</textarea>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-success w-50 me-1" name="action"
+                        value="save">Сохранить</button>
+                    <input type="file" name="file" accept=".txt" class="d-none" id="fileInput">
+                    <label for="fileInput" class="btn btn-success w-50 mb-0" style="cursor: pointer;">Загрузить
+                        текст</label>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('fileInput').addEventListener('change', function () {
+        if (this.files.length > 0) {
+            document.getElementById('textForm').submit();
+        }
+    });
+</script>
+
+{% endblock %}
+
+{% block right %}
+<h5 class="mb-3">⚙️ Настройки</h5>
+
+<form action="/upload" method="post" enctype="multipart/form-data" class="mb-2">
+    <label class="form-label">📤 Загрузить изображение | список номеров/изображений</label>
+    <div class="input-group">
+        <input type="file" name="file" class="form-control" required>
+        <button type="submit" class="btn btn-success">Загрузить</button>
+    </div>
+</form>
+<form action="/add_number" method="post">
+    <label for="phone" class="form-label">📞 Добавить номер телефона:</label>
+    <div class="input-group">
+        <span class="input-group-text">+7</span>
+        <input type="tel" name="phone" id="phone" class="form-control" placeholder="7011234567" required></label>
+        <button type="submit" class="btn btn-success">Добавить</button>
+    </div>
+</form>
+
+<form action="{{ url_for('set_category') }}" method="post" id="categoryForm">
+    <label for="categorySelect" class="form-label">📂 Категория:</label>
+    <select name="category" id="categorySelect" class="form-select" required
+        onchange="document.getElementById('categoryForm').submit()">
+        <option value="" disabled {% if not selected_category %}selected{% endif %}>-- Выберите --</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if cat==selected_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+    </select>
+</form>
+<div class="mt-2">
+    <span class="badge bg-info">Количество: {{ length }}</span>
+</div>
+
+{% endblock %}
+
+{% block picture %}
+<div class="mb-4">
+    <p>Здесь нужно разместить управление базой сообщений для рассылки</p>
+</div>
+{% endblock %}
+
+{% block phone %}
+{% if numbers %}
+<h6 class="mt-2">📱 Отправленные номера:</h6>
+<ol class="list-group list-group-numbered scrollable-list flex-grow-1">
+    {% for contact in numbers %}
+    <li class="list-group-item small d-flex align-items-center justify-content-between">
+        <div>
+            {% if contact.status == "sent" %}
+            ✅
+            {% elif contact.status == "pending" %}
+            ⏳
+            {% elif contact.status == "error" %}
+            ❌
+            {% else %}
+            ❔
+            {% endif %}
+            {{ contact.name or "Без имени" }} — {{ contact.number }}
+        </div>
+        <div class="btn-group btn-group-sm" role="group">
+            <form action="/change_status" method="post" class="d-inline">
+                <input type="hidden" name="phone" value="{{ contact.number }}">
+                <input type="hidden" name="status" value="sent">
+                <button type="submit" class="btn btn-success" title="Отправлено">✅</button>
+            </form>
+            <form action="/change_status" method="post" class="d-inline">
+                <input type="hidden" name="phone" value="{{ contact.number }}">
+                <input type="hidden" name="status" value="pending">
+                <button type="submit" class="btn btn-warning" title="Ожидает">⏳</button>
+            </form>
+            <form action="/delete_number" method="post" class="d-inline">
+                <input type="hidden" name="phone" value="{{ contact.number }}">
+                <button type="submit" class="btn btn-outline-danger" title="Удалить">🗑</button>
+            </form>
+        </div>
+    </li>
+    {% endfor %}
+</ol>
+{% endif %}
+{% endblock %}

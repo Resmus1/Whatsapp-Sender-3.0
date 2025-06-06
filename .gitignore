@@ -1,0 +1,5 @@
+/.venv
+/logs
+/profile
+/testfiles
+/__pycache__
