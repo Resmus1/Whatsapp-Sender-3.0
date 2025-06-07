@@ -1,7 +1,9 @@
 from playwright.sync_api import Playwright
 from database import db
 from utils import process_text_message
+import os
 import time
+from logger import logger
 
 
 def open_whatsapp(playwright: Playwright):
@@ -34,8 +36,14 @@ def send_message(contact, picture_path, text_message, search_box, page):
             print(f"Ошибка при получении имени контакта {contact.phone}: {e}")
             db.update_status(contact.phone, "error")
             return False
-    page.get_by_role("button", name="Прикрепить").click()
-    page.locator("(//input[@type='file'])[2]").set_input_files(picture_path)
+    if os.path.isfile(picture_path):
+        page.get_by_role("button", name="Прикрепить").click()
+        page.locator("(//input[@type='file'])[2]").set_input_files(picture_path)
+    else:
+        page.get_by_role("textbox", name="Введите сообщение").click()
+        page.get_by_role("textbox", name="Введите сообщение").fill(text_message)
+        logger.info(f"Отправка сообщения контакту: {contact.phone}")
+
 
     process_text_message(text_message, page)
 
