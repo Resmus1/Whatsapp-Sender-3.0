@@ -77,17 +77,10 @@ def start():
             new_chat_button.click()
             search_box = page.get_by_role(
                 "textbox", name="Поиск по имени или номеру")
-            search_box.wait_for(timeout=15000)
             picture_path = Path(app.config["UPLOAD_FOLDER"]) / "picture.jpg"
 
             # if all(contact.status == "sent" for contact in g.data):
             #     return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
-
-            contacts_to_send = (
-                [c for c in g.data if c.category ==
-                    session["selected_category"] and c.status == "pending"]
-                if session["selected_category"] else g.data
-            )
 
             for contact in g.filtered_contacts:
                 print(contact)

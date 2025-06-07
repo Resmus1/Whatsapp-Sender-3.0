@@ -22,9 +22,8 @@ def open_whatsapp(playwright: Playwright):
 def send_message(contact, picture_path, text_message, search_box, page):
     search_box.click()
     search_box.fill(contact.phone)
-    time.sleep(200)
+    page.wait_for_timeout(2000)
     search_box.press("Enter")
-
 
     if contact.name == None:
         try:
@@ -35,7 +34,6 @@ def send_message(contact, picture_path, text_message, search_box, page):
             print(f"Ошибка при получении имени контакта {contact.phone}: {e}")
             db.update_status(contact.phone, "error")
             return False
-
     page.get_by_role("button", name="Прикрепить").click()
     page.locator("(//input[@type='file'])[2]").set_input_files(picture_path)
 
