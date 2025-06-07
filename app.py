@@ -71,26 +71,22 @@ def start():
     with sync_playwright() as playwright:
         page = open_whatsapp(playwright)
         try:
-            logger.info("Начало отправки сообщений через WhatsApp")
-            new_chat_button = page.wait_for_selector(
-                '[data-icon="new-chat-outline"]', timeout=15000)
-            new_chat_button.click()
-            search_box = page.get_by_role(
-                "textbox", name="Поиск по имени или номеру")
             picture_path = Path(app.config["UPLOAD_FOLDER"]) / "picture.jpg"
+            if os.path.isfile(picture_path):
+                picture_path = str(picture_path)
+            else:
+                picture_path = None
 
             # if all(contact.status == "sent" for contact in g.data):
             #     return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
 
             for contact in g.filtered_contacts:
-                print(contact)
-                logger.debug(f"Отправка сообщения контакту: {contact.phone}")
+                logger.info(f"Отправка сообщения контакту: {contact.phone}")
                 if contact.status == "pending":
                     send_message(
                         contact,
                         picture_path,
                         session["text_message"],
-                        search_box,
                         page,
                     )
 

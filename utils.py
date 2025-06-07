@@ -57,12 +57,6 @@ def read_image():
         return url_for("static", filename="uploads/picture.jpg")
     return None
 
-
-def process_text_message(text_message, page):
-    text_field = page.get_by_role("textbox", name="Добавьте подпись")
-    text_field.click()
-    text_field.fill(text_message)
-
 def get_processed_numbers(users, selected_category):
         return [
             {

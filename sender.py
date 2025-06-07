@@ -1,12 +1,12 @@
 from playwright.sync_api import Playwright
 from database import db
-from utils import process_text_message
 import os
 import time
 from logger import logger
 
 
 def open_whatsapp(playwright: Playwright):
+    logger.debug("Открытие браузера")
     browser = playwright.chromium.launch_persistent_context(
         user_data_dir="profile",
         headless=False,
@@ -21,12 +21,8 @@ def open_whatsapp(playwright: Playwright):
     return page
 
 
-def send_message(contact, picture_path, text_message, search_box, page):
-    search_box.click()
-    search_box.fill(contact.phone)
-    page.wait_for_timeout(2000)
-    search_box.press("Enter")
-
+def send_message(contact, picture_path, text_message, page,):
+    new_chat(page, contact)
     if contact.name == None:
         try:
             name = page.locator(
@@ -36,20 +32,43 @@ def send_message(contact, picture_path, text_message, search_box, page):
             print(f"Ошибка при получении имени контакта {contact.phone}: {e}")
             db.update_status(contact.phone, "error")
             return False
-    if os.path.isfile(picture_path):
-        page.get_by_role("button", name="Прикрепить").click()
-        page.locator("(//input[@type='file'])[2]").set_input_files(picture_path)
-    else:
-        page.get_by_role("textbox", name="Введите сообщение").click()
-        page.get_by_role("textbox", name="Введите сообщение").fill(text_message)
-        logger.info(f"Отправка сообщения контакту: {contact.phone}")
-
-
-    process_text_message(text_message, page)
+        
+    processed_message(page, picture_path, text_message)
 
     # page.get_by_role("button", name="Отправить").click()
+    logger.info("Сообщение отправлено")
     page.wait_for_timeout(1000)
     db.update_status(contact.phone, "sent")
+
+def new_chat(page, contact):
+    logger.debug(f"Новый чат с контактом: {contact.phone}")
+    new_chat_button = page.wait_for_selector(
+        '[data-icon="new-chat-outline"]', timeout=15000)
+    new_chat_button.click()
+    search_box = page.get_by_role(
+        "textbox", name="Поиск по имени или номеру")
+
+    search_box.click()
+    search_box.fill(contact.phone)
+    page.wait_for_timeout(2000)
+    search_box.press("Enter")
+    logger.debug(f"Контакт открыт: {contact.phone}")
+
+
+def processed_message(page, picture_path, text_message):
+    logger.debug("Обработка сообщения")
+    if picture_path is not None:
+        logger.debug("Прикрепление изображения")
+        page.get_by_role("button", name="Прикрепить").click()
+        page.locator("(//input[@type='file'])[2]").set_input_files(picture_path)
+        logger.debug("Добавление подписи")
+        text_field = page.get_by_role("textbox", name="Добавьте подпись")
+        text_field.click()
+        text_field.fill(text_message)
+    else:
+        logger.debug("Написание текста")
+        text_field = page.locator('[aria-placeholder="Введите сообщение"]').click()
+        text_field.fill(text_message)
 
 
 def close_browser(playwright):
