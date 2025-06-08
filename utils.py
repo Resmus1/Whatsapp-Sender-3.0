@@ -36,6 +36,7 @@ def save_image_to_disk(image_bytes):
         "static", filename=f"uploads/{image_filename}")
     return "Image uploaded."
 
+
 def save_numbers(numbers, category):
     added, skipped = 0, 0
 
@@ -57,19 +58,20 @@ def read_image():
         return url_for("static", filename="uploads/picture.jpg")
     return None
 
+
 def get_processed_numbers(users, selected_category):
-        return [
-            {
-                "number": getattr(user, "phone"),
-                "name": getattr(user, "name"),
-                "status": getattr(user, "status"),
-            }
-            for user in users if user.category == selected_category
-        ]
+    return [
+        {
+            "number": getattr(user, "phone"),
+            "name": getattr(user, "name"),
+            "status": getattr(user, "status"),
+        }
+        for user in users if user.category == selected_category
+    ]
+
 
 def counter_statuses(contacts, selected_category=None):
     return dict(Counter([contact.status for contact in contacts if contact.category == selected_category]))
-
 
 
 def init_session():
@@ -78,34 +80,35 @@ def init_session():
     session["categories"] = db.get_phones_categories()
     session["selected_category"] = session.get("selected_category", None)
     g.data = db.get_all_users() or []
-    session["list_numbers"] = get_processed_numbers(g.data, session["selected_category"])
+    session["list_numbers"] = get_processed_numbers(
+        g.data, session["selected_category"])
     session["length"] = len(session["list_numbers"])
 
     if session["selected_category"]:
-        filtered_contacts = [
+        g.filtered_contacts = [
             c for c in g.data if c.category == session["selected_category"]
         ]
     else:
-        filtered_contacts = g.data
+        g.filtered_contacts = g.data
 
-    session["list_numbers"] = get_processed_numbers(g.data, session["selected_category"])
-    g.filtered_contacts = filtered_contacts
+    session["list_numbers"] = get_processed_numbers(
+        g.data, session["selected_category"])
 
 
 def change_status(phone, status):
     db.update_status(phone, status)
-    session["statuses"] = counter_statuses(g.data)
+    session["statuses"] = counter_statuses(g.filtered_contacts)
 
 
 def delete_number(phone):
     db.delete_user(phone)
-    session["statuses"] = counter_statuses(g.data)
+    session["statuses"] = counter_statuses(g.filtered_contacts)
 
 
-def add_number_to_db(phone):
-    contact = Contact(phone=phone)
+def add_number_to_db(phone, category):
+    contact = Contact(phone=phone, category=category)
     db.add_user(contact)
-    session["statuses"] = counter_statuses(g.data)
+    session["statuses"] = counter_statuses(g.filtered_contacts)
 
 
 def process_phone_number(phone):

@@ -31,7 +31,8 @@ def on_exit():
     db.reset_sent_statuses()
 
 
-@app.route("/reset_statuses", methods=["GET"]) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@app.route("/reset_statuses", methods=["GET"])
 def reset_statuses():
     logger.info("Сброс статусов пользователей")
     db.reset_sent_statuses()
@@ -68,6 +69,11 @@ def index():
 
 @app.route("/start")
 def start():
+    if all(contact.status == "sent" for contact in g.filtered_contacts):
+        logger.info(
+            "Нет ожидающих контактов для отправки сообщений в категории")
+        return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
+
     with sync_playwright() as playwright:
         page = open_whatsapp(playwright)
         try:
@@ -76,9 +82,6 @@ def start():
                 picture_path = str(picture_path)
             else:
                 picture_path = None
-
-            # if all(contact.status == "sent" for contact in g.data):
-            #     return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
 
             for contact in g.filtered_contacts:
                 logger.info(f"Отправка сообщения контакту: {contact.phone}")
@@ -164,8 +167,12 @@ def add_number():
     phone = utils.process_phone_number(request.form.get("phone"))
     logger.info(f"Добавлен номер: {phone}")
     if not phone.isdigit() or len(phone) != 10:
+        logger.info("Неверный формат номера")
         return utils.go_home_page(f"Введите 10 цифр после +7 (например, 7011234567)")
-    utils.add_number_to_db(phone)
+    if session["selected_category"] is None:
+        logger.debug("Категория не выбрана")
+        session["selected_category"] = "Без категории"
+    utils.add_number_to_db(phone, session["selected_category"])
     return utils.go_home_page(f"{phone} добавлен.")
 
 
