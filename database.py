@@ -33,10 +33,10 @@ class Database:
     def delete_user(self, phone):
         self.contacts.remove(self.Contacts.phone == phone)
 
-    def reset_sent_statuses(self):
+    def reset_sent_statuses(self, category):
         self.contacts.update(
             {'status': 'pending'},
-            self.Contacts.status == 'sent'
+            self.Contacts.status == 'sent' and self.Contacts.category == category
         )
 
     def update_status(self, phone, new_status):

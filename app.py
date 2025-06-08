@@ -28,14 +28,13 @@ def before_request():
 
 @atexit.register
 def on_exit():
-    db.reset_sent_statuses()
+    logger.info("Завершение работы приложения")
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @app.route("/reset_statuses", methods=["GET"])
 def reset_statuses():
     logger.info("Сброс статусов пользователей")
-    db.reset_sent_statuses()
+    db.reset_sent_statuses(session["selected_category"])
     g.data = db.get_all_users()
     session["statuses"] = utils.counter_statuses(g.data)
 
