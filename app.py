@@ -91,6 +91,8 @@ def start():
                         session["text_message"],
                         page,
                     )
+                else:
+                    logger.info(f"Сообщение уже было отправлено: {contact.phone}")
 
             g.data = db.get_all_users()
             if all(contact.status == "sent" for contact in g.data):

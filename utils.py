@@ -80,19 +80,17 @@ def init_session():
     session["categories"] = db.get_phones_categories()
     session["selected_category"] = session.get("selected_category", None)
     g.data = db.get_all_users() or []
-    session["list_numbers"] = get_processed_numbers(
-        g.data, session["selected_category"])
-    session["length"] = len(session["list_numbers"])
 
     if session["selected_category"]:
         g.filtered_contacts = [
             c for c in g.data if c.category == session["selected_category"]
         ]
     else:
-        g.filtered_contacts = g.data
+        g.filtered_contacts = {}
 
     session["list_numbers"] = get_processed_numbers(
         g.data, session["selected_category"])
+    session["length"] = len(session["list_numbers"])
 
 
 def change_status(phone, status):
