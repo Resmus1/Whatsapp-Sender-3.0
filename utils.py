@@ -1,9 +1,8 @@
 import os
-import random
 import requests
 from flask import url_for, redirect, current_app, session, g
 from database import db
-from models import Contact, Image
+from models import Contact, Message
 from collections import Counter
 
 
@@ -74,11 +73,12 @@ def counter_statuses(contacts, selected_category=None):
     return dict(Counter([contact.status for contact in contacts if contact.category == selected_category]))
 
 
-def init_session():
+def init_session():    
     session["image_directory_path"] = read_image()
     session["text_message"] = session.get("text_message", "")
     session["categories"] = db.get_phones_categories()
     session["selected_category"] = session.get("selected_category", None)
+    session["position_message"] = session.get("position_message", 0)
     g.data = db.get_all_users() or []
 
     if session["selected_category"]:
@@ -91,6 +91,7 @@ def init_session():
     session["list_numbers"] = get_processed_numbers(
         g.data, session["selected_category"])
     session["length"] = len(session["list_numbers"])
+    session["length_messages"] = db.count_messages()
 
 
 def change_status(phone, status):
@@ -117,6 +118,22 @@ def process_phone_number(phone):
     elif cleaned.startswith("8"):
         cleaned = cleaned[1:]
     return cleaned
+
+
+def add_message_to_db(message):
+    upload_message = Message(message)
+    db.add_message(upload_message)
+
+def get_index_message(index_message):
+    messages = db.get_all_messages()
+    if not messages:
+        return ""
+    return messages[index_message].text
+
+def delete_message_in_db(text_message):
+    db.delete_message(text_message)
+    session["text_message"] = ""
+
 
 
 def go_home_page(message):

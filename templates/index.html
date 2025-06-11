@@ -59,20 +59,7 @@
             </form>
         </div>
         <div>
-            <form action="/text" method="post" enctype="multipart/form-data" class="mb-2" id="textForm">
-                <label for="text" class="form-label">💬 Введите сообщение</label>
-                <div class="mb-2">
-                    <textarea name="text" id="text" class="form-control textarea_message" maxlength="1000"
-                        placeholder="Введите текст...">{{ session.get('text_message') }}</textarea>
-                </div>
-                <div class="d-flex">
-                    <button type="submit" class="btn btn-success w-50 me-1" name="action"
-                        value="save">Сохранить</button>
-                    <input type="file" name="file" accept=".txt" class="d-none" id="fileInput">
-                    <label for="fileInput" class="btn btn-success w-50 mb-0" style="cursor: pointer;">Загрузить
-                        текст</label>
-                </div>
-            </form>
+            <p class="m-0">Дополнительные настройки:</p>
         </div>
     </div>
 </div>
@@ -123,7 +110,27 @@
 
 {% block picture %}
 <div class="mb-4">
-    <p>Здесь нужно разместить управление базой сообщений для рассылки</p>
+    <form action="/text" method="post" enctype="multipart/form-data" class="mb-2" id="textForm">
+        <label for="text" class="form-label">💬 Введите сообщение</label>
+        <div class="mb-2">
+            <textarea name="text" id="text" class="form-control textarea_message" maxlength="1000"
+                placeholder="Введите текст...">{{ session.get('text_message') }}</textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" name="action" value="next" class="btn btn-outline-primary">Следующее</button>
+            <button type="submit" name="action" value="prev" class="btn btn-outline-primary">Предыдущее</button>
+            <button type="submit" name="action" value="save" class="btn btn-outline-success">Сохранить</button>
+            <button type="submit" name="action" value="delete" class="btn btn-outline-danger">Удалить</button>
+
+            <input type="file" name="file" accept=".txt" class="d-none" id="fileInput">
+            <label for="fileInput" class="btn btn-outline-success" style="cursor: pointer;">Загрузить текст</label>
+        </div>
+        <div class="mt-2">
+            <span class="badge bg-info">Сообщение:
+                {{ position_message + 1}} из {{ length_messages}}
+            </span>
+        </div>
+    </form>
 </div>
 {% endblock %}
 

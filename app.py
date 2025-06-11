@@ -60,6 +60,8 @@ def index():
         current_image_url=current_image_url,
         image_directory_path=session["image_directory_path"],
         length=session["length"],
+        length_messages=session["length_messages"],
+        position_message=session.get("position_message", 0),
         sent_message=session.get("text_message"),
         numbers=session["list_numbers"],
         **utils.counter_statuses(g.data, selected_category)
@@ -92,7 +94,8 @@ def start():
                         page,
                     )
                 else:
-                    logger.info(f"Сообщение уже было отправлено: {contact.phone}")
+                    logger.info(
+                        f"Сообщение уже было отправлено: {contact.phone}")
 
             g.data = db.get_all_users()
             if all(contact.status == "sent" for contact in g.data):
@@ -125,16 +128,36 @@ def upload():
 
 
 @app.route("/text", methods=["POST"])
-def text():
-    logger.info("Пользователь задал текст сообщения")
-    session["text_message"] = request.form.get("text") or ""
-
+def handle_text():
     uploaded_file = request.files.get("file")
     if uploaded_file and uploaded_file.filename.endswith('.txt'):
         file_content = uploaded_file.read().decode('utf-8')
         session["text_message"] = file_content
+        utils.add_message_to_db(session["text_message"])
+        return utils.go_home_page("Текст из файла загружен")
 
-    return utils.go_home_page("Текст сообщения сохранен")
+    session["text_message"] = request.form.get("text") or ""
+    action = request.form.get("action")
+
+    if action == "next":
+        if session["position_message"] < session["length_messages"] - 1:
+            session["position_message"] += 1
+            session["text_message"] = utils.get_index_message(session["position_message"])
+
+    elif action == "prev":
+        if session["position_message"] > 0:
+            session["position_message"] -= 1
+            session["text_message"] = utils.get_index_message(session["position_message"])
+
+            
+    elif action == "save":
+        utils.add_message_to_db(session["text_message"])
+        return utils.go_home_page("Текст сообщения сохранен")
+    elif action == "delete":
+        utils.delete_message_in_db(session["text_message"])
+        return utils.go_home_page("Текст сообщения удален")
+
+    return utils.go_home_page("Нет действия или неизвестная команда")
 
 
 @app.route("/set_category", methods=["POST"])

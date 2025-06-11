@@ -18,18 +18,15 @@ class Contact:
         return Contact(data['phone'], data.get('name'), data.get('category'), data['status'])
 
 
-class Image:
-    def __init__(self, url, category):
-        self.url = url
-        self.category = category
-
+class Message:
+    def __init__(self, text):
+        self.text = text
 
     def to_dict(self):
         return {
-            'url': self.url,
-            'category': self.category,
+            'text': self.text,
         }
     
     @staticmethod
     def from_dict(data):
-        return Image(data['url'], data.get('category'))
+        return Message(data['text'])
