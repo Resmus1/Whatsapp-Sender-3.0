@@ -1,6 +1,9 @@
 import os
 import atexit
 from pathlib import Path
+import sched
+import time
+import random
 
 from flask import Flask, render_template,  request, url_for, g, session
 from playwright.sync_api import sync_playwright
@@ -9,13 +12,14 @@ from config import Config
 from database import db
 
 from logger import logger
-from sender import open_whatsapp, send_message
+from sender import open_whatsapp
 import utils
 
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
+scheduler = sched.scheduler(time.time, time.sleep)
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -70,10 +74,18 @@ def index():
 
 @app.route("/start")
 def start():
-    if all(contact.status == "sent" for contact in g.filtered_contacts):
-        logger.info(
-            "Нет ожидающих контактов для отправки сообщений в категории")
-        return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
+    logger.debug("Получение контактов для обработки")
+    pending_contacts = [
+        c for c in g.filtered_contacts if c.status == "pending"]
+    lists_pending_contacts = utils.split_contacts(pending_contacts)
+    logger.info(f"Количество ожидающих контактов: {len(pending_contacts)}")
+    logger.debug(f"Количество списков ожидающих контактов: {len(lists_pending_contacts)}")
+    if not pending_contacts:
+        logger.info("Нет ожидающих контактов для отправки сообщений")
+        return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
+
+    count = min(random.randint(15, 20), len(pending_contacts))
+    logger.info(f"Запуск обработки {count} сообщений")
 
     with sync_playwright() as playwright:
         page = open_whatsapp(playwright)
@@ -84,18 +96,11 @@ def start():
             else:
                 picture_path = None
 
-            for contact in g.filtered_contacts:
-                logger.info(f"Отправка сообщения контакту: {contact.phone}")
-                if contact.status == "pending":
-                    send_message(
-                        contact,
-                        picture_path,
-                        session["text_message"],
-                        page,
-                    )
-                else:
-                    logger.info(
-                        f"Сообщение уже было отправлено: {contact.phone}")
+            for i, list_pending_contacts in enumerate(lists_pending_contacts, 1):
+                logger.info(
+                    f"[{i}/{len(lists_pending_contacts)}] Запуск цикла обработки списка контактов")
+                utils.processing_cycle(
+                    page, picture_path, list_pending_contacts, count)
 
             g.data = db.get_all_users()
             if all(contact.status == "sent" for contact in g.data):
@@ -142,14 +147,15 @@ def handle_text():
     if action == "next":
         if session["position_message"] < session["length_messages"] - 1:
             session["position_message"] += 1
-            session["text_message"] = utils.get_index_message(session["position_message"])
+            session["text_message"] = utils.get_index_message(
+                session["position_message"])
 
     elif action == "prev":
         if session["position_message"] > 0:
             session["position_message"] -= 1
-            session["text_message"] = utils.get_index_message(session["position_message"])
+            session["text_message"] = utils.get_index_message(
+                session["position_message"])
 
-            
     elif action == "save":
         utils.add_message_to_db(session["text_message"])
         return utils.go_home_page("Текст сообщения сохранен")

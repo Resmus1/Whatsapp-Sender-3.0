@@ -1,9 +1,12 @@
 import os
-import requests
+import time
+import random
 from flask import url_for, redirect, current_app, session, g
 from database import db
 from models import Contact, Message
 from collections import Counter
+from logger import logger
+from sender import send_message
 
 
 def file_processing(file):
@@ -73,7 +76,7 @@ def counter_statuses(contacts, selected_category=None):
     return dict(Counter([contact.status for contact in contacts if contact.category == selected_category]))
 
 
-def init_session():    
+def init_session():
     session["image_directory_path"] = read_image()
     session["text_message"] = session.get("text_message", "")
     session["categories"] = db.get_phones_categories()
@@ -124,16 +127,70 @@ def add_message_to_db(message):
     upload_message = Message(message)
     db.add_message(upload_message)
 
+
 def get_index_message(index_message):
     messages = db.get_all_messages()
     if not messages:
         return ""
     return messages[index_message].text
 
+
 def delete_message_in_db(text_message):
     db.delete_message(text_message)
     session["text_message"] = ""
 
+
+def processing_cycle(page, picture_path, pending_contacts, count):
+    logger.debug("Запуск цикла обработки")
+    start_time = time.time()
+    pauses = random_pauses(3600, count - 1, 120, 300)
+    logger.info(f"Генерация {len(pauses)} пауз: {pauses}")
+
+    for i, contact in enumerate(pending_contacts, 1):
+        logger.info(f"[{i}/{count}] Обработка контакта: {contact.phone}")
+        send_message(
+            contact,
+            picture_path,
+            session["text_message"],
+            page,
+        )
+        if i != count:
+            logger.info(f"Осталось отправить {count - i} сообщений")
+            pause = pauses[i - 1]
+            logger.info(f"Пауза {pause} секунд")
+            time.sleep(pause)
+
+    elapsed_time = time.time() - start_time
+    logger.debug(f"Обработка завершена за {elapsed_time} секунд")
+
+    remaining = 3600 - elapsed_time
+    logger.info(f"Завершение обработки. Осталось {remaining} секунд")
+    if remaining > 0:
+        logger.info(f"Ждём остаток часа: {int(remaining)} секунд")
+        time.sleep(remaining)
+        logger.debug("Цикл обработки завершён")
+
+
+def random_pauses(total, n, min_pause=30, max_pause=300):
+    weights = [random.uniform(min_pause, max_pause) for _ in range(n)]
+    factor = total / sum(weights)
+    return [int(w * factor) for w in weights]
+
+
+def split_contacts(contacts, min_size=15, max_size=20):
+    logger.debug("Разделение контактов на списки")
+    chunks = []
+    i = 0
+    while i < len(contacts):
+        remaining = len(contacts) - i
+        if remaining <= min_size:
+            chunks.append(contacts[i:])
+            logger.debug("Осталось мало контактов для разделения")
+            break
+        chunk_size = random.randint(min_size, max_size)
+        chunks.append(contacts[i:i + chunk_size])
+        i += chunk_size
+    return chunks
 
 
 def go_home_page(message):
