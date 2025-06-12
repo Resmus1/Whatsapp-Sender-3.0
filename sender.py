@@ -20,7 +20,7 @@ def open_whatsapp(playwright: Playwright):
     return page
 
 
-def send_message(contact, picture_path, text_message, page,):
+def send_message(contact, picture_path, page,):
     search_box = page.get_by_role(
         "textbox", name="Поиск по имени или номеру")
 
@@ -41,7 +41,7 @@ def send_message(contact, picture_path, text_message, page,):
     send_button = page.get_by_role("button", name="Отправить")
 
     say_hello(page, contact, text_field, send_button)
-    processed_message(page, contact, picture_path, text_field, send_button, text_message)
+    processed_message(page, contact, picture_path, text_field, send_button)
 
     # page.get_by_role("button", name="Отправить").click()
     logger.info("Сообщение отправлено")
@@ -74,8 +74,9 @@ def say_hello(page, contact, text_field, send_button):
         page.screenshot(path=f"logs/errors/{contact.phone}.png")
 
 
-def processed_message(page, contact, picture_path, text_field, send_button, text_message):
+def processed_message(page, contact, picture_path, text_field, send_button):
     logger.debug("Обработка сообщения")
+    text_message = random.choice(db.get_messages(category='info')).text
     if picture_path is not None:
         try:
             logger.debug("Прикрепление изображения")
@@ -83,20 +84,24 @@ def processed_message(page, contact, picture_path, text_field, send_button, text
             page.locator(
                 "(//input[@type='file'])[2]").set_input_files(picture_path)
             logger.debug("Добавление подписи")
+            text_field = page.get_by_role("textbox", name="Добавьте подпись")
+            text_field.click()
+            text_field.type(text_message)
+            # send_button.click()
         except Exception as e:
             logger.error(f"Ошибка при отправки изображения: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")
             db.update_status(contact.phone, "error")
     else:
         logger.debug("Написание текста")
-    try:
-        text_field.click()
-        text_field.type(text_message)
-        # send_button.click()
-    except Exception as e:
-        logger.error(f"Ошибка при отправке приветствия: {e}")
-        page.screenshot(path=f"logs/errors/{contact.phone}.png")
-        db.update_status(contact.phone, "error")
+        try:
+            text_field.click()
+            text_field.type(text_message)
+            # send_button.click()
+        except Exception as e:
+            logger.error(f"Ошибка при отправке приветствия: {e}")
+            page.screenshot(path=f"logs/errors/{contact.phone}.png")
+            db.update_status(contact.phone, "error")
 
 
 def check_name(page, contact):

@@ -151,7 +151,6 @@ def processing_cycle(page, picture_path, pending_contacts, count):
         send_message(
             contact,
             picture_path,
-            session["text_message"],
             page,
         )
         if i != count:
