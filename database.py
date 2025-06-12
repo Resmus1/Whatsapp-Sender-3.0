@@ -65,19 +65,29 @@ class Database:
         except Exception as e:
             logger.exception((f"Ошибка при добавлении сообщения: {e}"))
         return False
-    
+
     def count_messages(self):
-        return len(self.messages)
-    
-    def get_all_messages(self):
+        count = sum(
+            1 for message in self.messages.all()
+            if Message.from_dict(message).category == "info"
+        )
+        return count
+
+    def get_messages(self, category):
         try:
-            return [Message.from_dict(message) for message in self.messages.all()]
+            messages = list(
+                Message.from_dict(message)
+                for message in self.messages.all()
+                if message['category'] == category
+            )
+
+            return messages
         except json.JSONDecodeError:
             return []
-    
+
+
     def delete_message(self, text_message):
         self.messages.remove(self.Messages.text == text_message)
-
 
 
 db = Database()

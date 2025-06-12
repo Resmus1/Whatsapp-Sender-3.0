@@ -1,6 +1,7 @@
 from playwright.sync_api import Playwright
 from database import db
 from logger import logger
+import random
 
 
 def open_whatsapp(playwright: Playwright):
@@ -22,7 +23,7 @@ def open_whatsapp(playwright: Playwright):
 def send_message(contact, picture_path, text_message, page,):
     search_box = page.get_by_role(
         "textbox", name="Поиск по имени или номеру")
-    
+
     new_chat(page, contact, search_box)
 
     if page.locator("text=Не найдено").first.is_visible():
@@ -36,7 +37,11 @@ def send_message(contact, picture_path, text_message, page,):
     if contact.name == None:
         check_name(page, contact)
 
-    processed_message(page, contact, picture_path, text_message)
+    text_field = page.get_by_role("textbox", name="Введите сообщение")
+    send_button = page.get_by_role("button", name="Отправить")
+
+    say_hello(page, contact, text_field, send_button)
+    processed_message(page, contact, picture_path, text_field, send_button, text_message)
 
     # page.get_by_role("button", name="Отправить").click()
     logger.info("Сообщение отправлено")
@@ -56,27 +61,42 @@ def new_chat(page, contact, search_box):
     search_box.press("Enter")
 
 
-def processed_message(page, contact, picture_path, text_message):
+def say_hello(page, contact, text_field, send_button):
+    logger.debug("Приветствие")
+    hello = random.choice(db.get_messages(category='hello')).text
+    try:
+        text_field.click()
+        text_field.type(hello)
+        # send_button.click()
+        page.wait_for_timeout(random.randint(3000, 5000))
+    except Exception as e:
+        logger.error(f"Ошибка при отправке приветствия: {e}")
+        page.screenshot(path=f"logs/errors/{contact.phone}.png")
+
+
+def processed_message(page, contact, picture_path, text_field, send_button, text_message):
     logger.debug("Обработка сообщения")
     if picture_path is not None:
-        logger.debug("Прикрепление изображения")
-        page.get_by_role("button", name="Прикрепить").click()
-        page.locator(
-            "(//input[@type='file'])[2]").set_input_files(picture_path)
-        logger.debug("Добавление подписи")
         try:
-            text_field = page.get_by_role("textbox", name="Введите сообщение")
-            text_field.click()
-            text_field.type(text_message)
+            logger.debug("Прикрепление изображения")
+            page.get_by_role("button", name="Прикрепить").click()
+            page.locator(
+                "(//input[@type='file'])[2]").set_input_files(picture_path)
+            logger.debug("Добавление подписи")
         except Exception as e:
-            logger.error(f"Ошибка при отправке текста: {e}")
+            logger.error(f"Ошибка при отправки изображения: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")
             db.update_status(contact.phone, "error")
     else:
         logger.debug("Написание текста")
-        text_field = page.get_by_role("textbox", name="Введите сообщение")
+    try:
         text_field.click()
         text_field.type(text_message)
+        # send_button.click()
+    except Exception as e:
+        logger.error(f"Ошибка при отправке приветствия: {e}")
+        page.screenshot(path=f"logs/errors/{contact.phone}.png")
+        db.update_status(contact.phone, "error")
 
 
 def check_name(page, contact):

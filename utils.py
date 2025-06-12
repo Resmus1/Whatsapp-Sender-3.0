@@ -129,7 +129,7 @@ def add_message_to_db(message):
 
 
 def get_index_message(index_message):
-    messages = db.get_all_messages()
+    messages = db.get_messages(category='info')
     if not messages:
         return ""
     return messages[index_message].text

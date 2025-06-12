@@ -19,14 +19,16 @@ class Contact:
 
 
 class Message:
-    def __init__(self, text):
+    def __init__(self, text, category='info'):
         self.text = text
+        self.category = category
 
     def to_dict(self):
         return {
             'text': self.text,
+            'category': self.category
         }
     
     @staticmethod
     def from_dict(data):
-        return Message(data['text'])
+        return Message(data['text'], data.get('category'))
