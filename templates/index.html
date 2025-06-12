@@ -30,25 +30,15 @@
 
 <div class="row">
     <div class="col-md-5">
-        <div class="row">
-            <div class="col-md-12">
-                <p class="m-0">Сообщение:</p>
-            </div>
-            <div class="col-md-5 border rounded ms-2 p-1 text-center">
+        <div class="row mt-4">
+            <div class="col-md-12 border p-1 ratio ratio-4x3">
                 {% if image_directory_path %}
-                <img src="{{ image_directory_path }}" class="img-fluid" alt="Картинка">
+                <img src="{{ image_directory_path }}" class="img-fluid object-fit-contain" alt="Картинка">
                 {% else %}
-                <p>Нет изображения.</p>
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <p class="m-0 text-muted">Нет изображения.</p>
+                </div>
                 {% endif %}
-
-                {% if sent_message %}
-                <p class="text-success small m-0">
-                    {{ sent_message[:10] ~ '...' if sent_message|length > 10 else sent_message }}
-                </p>
-                {% endif %}
-            </div>
-            <div class="col-md-6">
-                <p class="m-0">Расширить превью или добавить настройку</p>
             </div>
         </div>
     </div>
