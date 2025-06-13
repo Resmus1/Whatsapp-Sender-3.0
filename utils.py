@@ -3,53 +3,10 @@ import time
 import random
 from flask import url_for, redirect, current_app, session, g
 from database import db
-from models import Contact, Message
+from models import Contact
 from collections import Counter
 from logger import logger
 from sender import send_message
-
-
-def file_processing(file):
-    ext = file.filename.rsplit('.')[-1].lower()
-
-    if ext == "txt":
-        file_content = file.read().decode("utf-8")
-        file_name = file.filename.rsplit('.')[0]
-        file_content = [row.strip()
-                        for row in file_content.split('\n') if row.strip()]
-        status = save_numbers(file_content, file_name)
-
-    elif ext == "jpg":
-        status = save_image_to_disk(file.read())
-    else:
-        return "Неподдерживаемый формат файла."
-    return status
-
-
-def save_image_to_disk(image_bytes):
-    upload_folder = current_app.config["UPLOAD_FOLDER"]
-    image_filename = "picture.jpg"
-    image_path = os.path.join(upload_folder, image_filename)
-
-    with open(image_path, "wb") as f:
-        f.write(image_bytes)
-
-    session["image_path"] = url_for(
-        "static", filename=f"uploads/{image_filename}")
-    return "Image uploaded."
-
-
-def save_numbers(numbers, category):
-    added, skipped = 0, 0
-
-    for phone_number in numbers:
-        contact = Contact(phone=phone_number, category=category)
-        if db.add_user(contact):
-            added += 1
-        else:
-            skipped += 1
-
-    return f"Загружено {added} новых контактов. {skipped} контактов уже существуют."
 
 
 def read_image():
@@ -123,21 +80,11 @@ def process_phone_number(phone):
     return cleaned
 
 
-def add_message_to_db(message):
-    upload_message = Message(message)
-    db.add_message(upload_message)
-
-
 def get_index_message(index_message):
     messages = db.get_messages(category='info')
     if not messages:
         return ""
     return messages[index_message].text
-
-
-def delete_message_in_db(text_message):
-    db.delete_message(text_message)
-    session["text_message"] = ""
 
 
 def processing_cycle(page, picture_path, pending_contacts, count):

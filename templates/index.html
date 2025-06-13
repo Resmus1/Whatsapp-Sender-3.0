@@ -66,8 +66,15 @@
 {% block right %}
 <h5 class="mb-3">⚙️ Настройки</h5>
 
-<form action="/upload" method="post" enctype="multipart/form-data" class="mb-2">
-    <label class="form-label">📤 Загрузить изображение | список номеров/изображений</label>
+<form action="/upload_image" method="post" enctype="multipart/form-data" class="mb-2">
+    <label class="form-label">📤 Загрузить изображение</label>
+    <div class="input-group">
+        <input type="file" name="file" class="form-control" required>
+        <button type="submit" class="btn btn-success">Загрузить</button>
+    </div>
+</form>
+<form action="/upload_contacts" method="post" enctype="multipart/form-data" class="mb-2">
+    <label class="form-label">📤 Загрузить список номеров</label>
     <div class="input-group">
         <input type="file" name="file" class="form-control" required>
         <button type="submit" class="btn btn-success">Загрузить</button>

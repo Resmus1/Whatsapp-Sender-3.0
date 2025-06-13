@@ -31,7 +31,7 @@ def send_pending_contacts():
     with sync_playwright() as playwright:
         page = open_whatsapp(playwright)
         try:
-            picture_path = Path(app.config["UPLOAD_FOLDER"]) / "picture.jpg"
+            picture_path = Path(app.config["UPLOAD_FOLDER"]) / "PICTURE_FILENAME"
             if os.path.isfile(picture_path):
                 picture_path = str(picture_path)
             else:
