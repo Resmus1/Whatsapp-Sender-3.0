@@ -1,18 +1,16 @@
 import os
 import atexit
-from pathlib import Path
 import sched
 import time
-import random
+import re
 
-from flask import Flask, render_template,  request, url_for, g, session
-from playwright.sync_api import sync_playwright
+from flask import Flask, render_template,  request, g, session
+from services import sender_service
 
 from config import Config
 from database import db
 
 from logger import logger
-from sender import open_whatsapp
 import utils
 
 
@@ -74,49 +72,8 @@ def index():
 
 @app.route("/start")
 def start():
-    logger.debug("Получение контактов для обработки")
-    pending_contacts = [
-        c for c in g.filtered_contacts if c.status == "pending"]
-    lists_pending_contacts = utils.split_contacts(pending_contacts)
-    logger.info(f"Количество ожидающих контактов: {len(pending_contacts)}")
-    logger.debug(f"Количество списков ожидающих контактов: {len(lists_pending_contacts)}")
-    if not pending_contacts:
-        logger.info("Нет ожидающих контактов для отправки сообщений")
-        return utils.go_home_page("Нет ожидающих контактов для отправки сообщений")
-
-    count = min(random.randint(15, 20), len(pending_contacts))
-    logger.info(f"Запуск обработки {count} сообщений")
-
-    with sync_playwright() as playwright:
-        page = open_whatsapp(playwright)
-        try:
-            picture_path = Path(app.config["UPLOAD_FOLDER"]) / "picture.jpg"
-            if os.path.isfile(picture_path):
-                picture_path = str(picture_path)
-            else:
-                picture_path = None
-
-            for i, list_pending_contacts in enumerate(lists_pending_contacts, 1):
-                logger.info(
-                    f"[{i}/{len(lists_pending_contacts)}] Запуск цикла обработки списка контактов")
-                utils.processing_cycle(
-                    page, picture_path, list_pending_contacts, count)
-
-            g.data = db.get_all_users()
-            if all(contact.status == "sent" for contact in g.data):
-                return utils.go_home_page("Все сообщения отправлены")
-
-            return utils.go_home_page("Messages sent", **session["statuses"])
-
-        except Exception as e:
-            logger.exception(f"Ошибка загрузки чатов: {e}")
-            qr = "canvas[aria-label*='Scan this QR code']"
-            try:
-                page.wait_for_selector(qr, timeout=15000)
-            except:
-                pass
-
-    return utils.go_home_page("Unknown error")
+    message = sender_service.send_pending_contacts()
+    return utils.go_home_page(message)
 
 
 @app.route("/upload", methods=["POST"])
@@ -196,7 +153,7 @@ def delete_number_route():
 def add_number():
     phone = utils.process_phone_number(request.form.get("phone"))
     logger.info(f"Добавлен номер: {phone}")
-    if not phone.isdigit() or len(phone) != 10:
+    if not re.fullmatch(r"\d{10}", phone):
         logger.info("Неверный формат номера")
         return utils.go_home_page(f"Введите 10 цифр после +7 (например, 7011234567)")
     if session["selected_category"] is None:

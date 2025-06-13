@@ -3,5 +3,6 @@
 /profile
 /testfiles
 /__pycache__
+/services/__pycache__
 picture.jpg
 database.json
