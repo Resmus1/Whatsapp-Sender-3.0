@@ -1,5 +1,5 @@
 from tinydb import TinyDB, Query
-from models import Contact, Message
+from database.models import Contact, Message
 import json
 from logger import logger
 

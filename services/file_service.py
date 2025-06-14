@@ -3,7 +3,7 @@ from logger import logger
 from config import Config
 from pathlib import Path
 from database import db
-from models import Contact, Message
+from database import Contact, Message
 from flask import session
 from utils import get_index_message
 

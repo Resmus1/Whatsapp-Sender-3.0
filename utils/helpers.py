@@ -3,7 +3,7 @@ import time
 import random
 from flask import url_for, redirect, current_app, session, g
 from database import db
-from models import Contact
+from database import Contact
 from collections import Counter
 from logger import logger
 from sender import send_message
