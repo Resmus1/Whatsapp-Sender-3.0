@@ -65,21 +65,19 @@
 
 {% block right %}
 <h5 class="mb-3">⚙️ Настройки</h5>
-
-<form action="/upload_image" method="post" enctype="multipart/form-data" class="mb-2">
-    <label class="form-label">📤 Загрузить изображение</label>
-    <div class="input-group">
-        <input type="file" name="file" class="form-control" required>
-        <button type="submit" class="btn btn-success">Загрузить</button>
-    </div>
-</form>
-<form action="/upload_contacts" method="post" enctype="multipart/form-data" class="mb-2">
-    <label class="form-label">📤 Загрузить список номеров</label>
-    <div class="input-group">
-        <input type="file" name="file" class="form-control" required>
-        <button type="submit" class="btn btn-success">Загрузить</button>
-    </div>
-</form>
+<div class="col-md-12 d-flex align-items-center py-1">
+    <form id="imageForm" action="/upload_image" method="POST" enctype="multipart/form-data" class="mb-2">
+        <input type="file" name="file" accept=".jpg" class="d-none" id="imageInput">
+        <label for="imageInput" class="btn btn-success">Загрузить изображение</label>
+    </form>
+    <form action="/upload_contacts" method="post" enctype="multipart/form-data" class="mb-2">
+        <label class="form-label">📤 Загрузить список номеров</label>
+        <div class="input-group">
+            <input type="file" name="file" class="form-control" required>
+            <button type="submit" class="btn btn-success">Загрузить</button>
+        </div>
+    </form>
+</div>
 <form action="/add_number" method="post">
     <label for="phone" class="form-label">📞 Добавить номер телефона:</label>
     <div class="input-group">
@@ -114,8 +112,8 @@
                 placeholder="Введите текст...">{{ session.get('text_message') }}</textarea>
         </div>
         <div class="d-flex gap-2">
-            <button type="submit" name="action" value="next" class="btn btn-outline-primary">Следующее</button>
             <button type="submit" name="action" value="prev" class="btn btn-outline-primary">Предыдущее</button>
+            <button type="submit" name="action" value="next" class="btn btn-outline-primary">Следующее</button>
             <button type="submit" name="action" value="save" class="btn btn-outline-success">Сохранить</button>
             <button type="submit" name="action" value="delete" class="btn btn-outline-danger">Удалить</button>
 
