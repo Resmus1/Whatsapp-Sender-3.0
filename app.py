@@ -11,7 +11,7 @@ from config import Config
 from database import db
 
 from logger import logger
-import utils
+from utils import init_session, counter_statuses, go_home_page, change_status, delete_number, process_phone_number, add_number_to_db
 
 
 app = Flask(__name__)
@@ -24,7 +24,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 @app.before_request
 def before_request():
-    utils.init_session()
+    init_session()
     logger.debug(f"Обработка запроса: {request.method} {request.path}")
 
 
@@ -38,9 +38,9 @@ def reset_statuses():
     logger.info("Сброс статусов пользователей")
     db.reset_sent_statuses(session["selected_category"])
     g.data = db.get_all_users()
-    session["statuses"] = utils.counter_statuses(g.data)
+    session["statuses"] = counter_statuses(g.data)
 
-    return utils.go_home_page("Статусы сброшены")
+    return go_home_page("Статусы сброшены")
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -66,14 +66,14 @@ def index():
         position_message=session.get("position_message", 0),
         sent_message=session.get("text_message"),
         numbers=session["list_numbers"],
-        **utils.counter_statuses(g.data, selected_category)
+        **counter_statuses(g.data, selected_category)
     )
 
 
 @app.route("/start")
 def start():
     message = sender_service.send_pending_contacts()
-    return utils.go_home_page(message)
+    return go_home_page(message)
 
 
 @app.route("/upload_image", methods=["POST"])
@@ -82,15 +82,16 @@ def upload_image():
     status = file_service.save_image_file(upload_file)
     logger.info(f"Файл сохранён: {upload_file}")
 
-    return utils.go_home_page(status)
+    return go_home_page(status)
+
 
 @app.route("/upload_contacts", methods=["POST"])
 def upload_contacts():
     uploaded_file = request.files.get("file")
     status = file_service.contacts_file_processing(uploaded_file)
     logger.info(f"Файл сохранён: {uploaded_file}")
-    
-    return utils.go_home_page(status)
+
+    return go_home_page(status)
 
 
 @app.route("/text", methods=["POST"])
@@ -98,13 +99,14 @@ def handle_text():
     uploaded_file = request.files.get("file")
     if uploaded_file:
         status = file_service.handle_text_file(uploaded_file)
-    
+
     else:
         session["text_message"] = request.form.get("text") or ""
         action = request.form.get("action")
         status = file_service.handle_text_action(action)
-    
-    return utils.go_home_page(status)
+
+    return go_home_page(status)
+
 
 @app.route("/set_category", methods=["POST"])
 def set_category():
@@ -112,7 +114,7 @@ def set_category():
     logger.info(f"Выбрана категория: {selected}")
     if selected:
         session["selected_category"] = selected
-    return utils.go_home_page("Категория изменена")
+    return go_home_page("Категория изменена")
 
 
 @app.route('/change_status', methods=['POST'])
@@ -120,30 +122,30 @@ def change_status_route():
     phone = request.form.get('phone')
     status = request.form.get('status')
     logger.info(f"Статус изменён: {phone} → {status}")
-    utils.change_status(phone, status)
-    return utils.go_home_page(f"Статус {phone} изменен.")
+    change_status(phone, status)
+    return go_home_page(f"Статус {phone} изменен.")
 
 
 @app.route('/delete_number', methods=['POST'])
 def delete_number_route():
     phone = request.form.get('phone')
     logger.info(f"Удалён номер: {phone}")
-    utils.delete_number(phone)
-    return utils.go_home_page(f"{phone} удален.")
+    delete_number(phone)
+    return go_home_page(f"{phone} удален.")
 
 
 @app.route("/add_number", methods=["POST"])
 def add_number():
-    phone = utils.process_phone_number(request.form.get("phone"))
+    phone = process_phone_number(request.form.get("phone"))
     logger.info(f"Добавлен номер: {phone}")
     if not re.fullmatch(r"\d{10}", phone):
         logger.info("Неверный формат номера")
-        return utils.go_home_page(f"Введите 10 цифр после +7 (например, 7011234567)")
+        return go_home_page(f"Введите 10 цифр после +7 (например, 7011234567)")
     if session["selected_category"] is None:
         logger.debug("Категория не выбрана")
         session["selected_category"] = "Без категории"
-    utils.add_number_to_db(phone, session["selected_category"])
-    return utils.go_home_page(f"{phone} добавлен.")
+    add_number_to_db(phone, session["selected_category"])
+    return go_home_page(f"{phone} добавлен.")
 
 
 if __name__ == "__main__":
