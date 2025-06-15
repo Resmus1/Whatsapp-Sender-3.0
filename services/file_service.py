@@ -1,10 +1,11 @@
+import json
 from werkzeug.datastructures import FileStorage
 from logger import logger
 from config import Config
 from pathlib import Path
 from database import db
 from database import Contact, Message
-from flask import session
+from flask import session, g
 from utils import get_index_message
 
 
@@ -20,14 +21,21 @@ def save_image_file(upload_file: FileStorage) -> str:
 
 
 def contacts_file_processing(upload_file: FileStorage) -> str:
-    if upload_file and upload_file.filename.split('.')[-1] in ("txt", "csv"):
+    if upload_file:
+        ext = upload_file.filename.split(".")[-1]
+        file_name = upload_file.filename.split(".")[0]
+        content = read_uploaded_file(upload_file)
 
-        read_file_content = read_uploaded_file(upload_file)
-        file_name = upload_file.filename.rsplit('.')[0]
-        file_content = [row.strip()
-                        for row in read_file_content.split('\n') if row.strip()]
-        status = save_numbers(file_content, file_name)
-        return status
+        if ext == "txt":
+            lines = [row.strip()
+                        for row in content.split('\n') if row.strip()]
+            status = save_numbers(lines, file_name)
+            return status
+        
+        elif ext == "json":
+            data = json.loads(content)
+            save_numbers_json(data, file_name)
+            return None
 
     return "Неподдерживаемый формат файла. Только txt и csv"
 
@@ -45,7 +53,7 @@ def handle_text_file(upload_file: FileStorage) -> str:
 
 def handle_text_action(action: str) -> str:
     if action == "next":
-        if session["position_message"] < session["length_messages"] - 1:
+        if session["position_message"] < g.length_messages - 1:
             session["position_message"] += 1
             session["text_message"] = get_index_message(
                 session["position_message"])
@@ -78,6 +86,23 @@ def save_numbers(numbers: list[str], category: str) -> str:
             added += 1
         else:
             skipped += 1
+    if skipped:
+        logger.info(f"{skipped} номеров уже существовали и были пропущены.")
+
+    return f"Загружено {added} новых контактов. {skipped} контактов уже существуют."
+
+def save_numbers_json(data, category: str) -> str:
+    added, skipped = 0, 0
+
+    for contact_data in data:
+        name = contact_data["name"]
+        whatsapp = contact_data["socials"]["WhatsApp"]
+        for i, phone_number in enumerate(whatsapp):
+            contact = Contact(phone=phone_number, name=name if i == 0 else name + str(i), category=category)
+            if db.add_user(contact):
+                added += 1
+            else:
+                skipped += 1
     if skipped:
         logger.info(f"{skipped} номеров уже существовали и были пропущены.")
 

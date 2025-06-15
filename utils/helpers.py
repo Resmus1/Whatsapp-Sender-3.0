@@ -48,10 +48,10 @@ def init_session():
     else:
         g.filtered_contacts = {}
 
-    session["list_numbers"] = get_processed_numbers(
+    g.processed_numbers = get_processed_numbers(
         g.data, session["selected_category"])
-    session["length"] = len(session["list_numbers"])
-    session["length_messages"] = db.count_messages()
+    g.length = len( g.processed_numbers)
+    g.length_messages = db.count_messages()
 
 
 def change_status(phone, status):

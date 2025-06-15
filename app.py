@@ -61,11 +61,11 @@ def index():
         selected_category=selected_category,
         current_image_url=current_image_url,
         image_directory_path=session["image_directory_path"],
-        length=session["length"],
-        length_messages=session["length_messages"],
+        length=g.length,
+        length_messages=g.length_messages,
         position_message=session.get("position_message", 0),
         sent_message=session.get("text_message"),
-        numbers=session["list_numbers"],
+        numbers=g.processed_numbers,
         **counter_statuses(g.data, selected_category)
     )
 
