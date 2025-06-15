@@ -74,7 +74,7 @@
     </div>
     <div class="col-md-6">
         <form id="textForm" action="/upload_contacts" method="POST" enctype="multipart/form-data" class="mb-2 ms-1">
-            <input type="file" name="file" accept=".txt, .csv" class="d-none" id="fileInput">
+            <input type="file" name="file" accept=".txt, .json" class="d-none" id="fileInput">
             <label for="fileInput" class="btn btn-success w-100">Загрузить номера</label>
         </form>
     </div>
@@ -92,14 +92,14 @@
     <label for="categorySelect" class="form-label">📂 Категория:</label>
     <select name="category" id="categorySelect" class="form-select" required
         onchange="document.getElementById('categoryForm').submit()">
-        <option value="" disabled {% if not selected_category %}selected{% endif %}>-- Выберите --</option>
+        <option value="" selected hidden>-- Выберите --</option>
         {% for cat in categories %}
         <option value="{{ cat }}" {% if cat==selected_category %}selected{% endif %}>{{ cat }}</option>
         {% endfor %}
     </select>
 </form>
 <div class="mt-2">
-    <span class="badge bg-info">Количество: {{ length }}</span>
+    <span class="badge bg-info">Количество: {{ g.length }}</span>
 </div>
 
 {% endblock %}
@@ -117,7 +117,6 @@
             <button type="submit" name="action" value="next" class="btn btn-outline-primary">Следующее</button>
             <button type="submit" name="action" value="save" class="btn btn-outline-success">Сохранить</button>
             <button type="submit" name="action" value="delete" class="btn btn-outline-danger">Удалить</button>
-
             <input type="file" name="file" accept=".txt" class="d-none" id="fileInput">
             <label for="fileInput" class="btn btn-outline-success" style="cursor: pointer;">Загрузить текст</label>
         </div>
@@ -131,10 +130,10 @@
 {% endblock %}
 
 {% block phone %}
-{% if numbers %}
+{% if g.processed_numbers %}
 <h6 class="mt-2">📱 Отправленные номера:</h6>
 <ol class="list-group list-group-numbered scrollable-list flex-grow-1">
-    {% for contact in numbers %}
+    {% for contact in g.processed_numbers %}
     <li class="list-group-item small d-flex align-items-center justify-content-between">
         <div>
             {% if contact.status == "sent" %}

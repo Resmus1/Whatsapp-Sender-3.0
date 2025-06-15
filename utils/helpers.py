@@ -2,8 +2,7 @@ import os
 import time
 import random
 from flask import url_for, redirect, current_app, session, g
-from database import db
-from database import Contact
+from database import Contact, db
 from collections import Counter
 from logger import logger
 from sender import send_message
@@ -48,10 +47,10 @@ def init_session():
     else:
         g.filtered_contacts = {}
 
-    session["list_numbers"] = get_processed_numbers(
+    g.processed_numbers = get_processed_numbers(
         g.data, session["selected_category"])
-    session["length"] = len(session["list_numbers"])
-    session["length_messages"] = db.count_messages()
+    g.length = len( g.processed_numbers)
+    g.length_messages = db.count_messages()
 
 
 def change_status(phone, status):

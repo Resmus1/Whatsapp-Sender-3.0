@@ -67,11 +67,17 @@ class Database:
         return False
 
     def count_messages(self):
-        count = sum(
-            1 for message in self.messages.all()
-            if Message.from_dict(message).category == "info"
-        )
-        return count
+        try:
+            if "messages" not in self.db.tables():
+                return 0
+            count = sum(1 for message in self.messages.all()
+                        if Message.from_dict(message).category == "info"
+                        )
+            return count
+
+        except Exception as e:
+            print(f"[count_messages] Ошибка при подсчёте: {e}")
+            return 0
 
     def get_messages(self, category):
         try:
@@ -84,7 +90,6 @@ class Database:
             return messages
         except json.JSONDecodeError:
             return []
-
 
     def delete_message(self, text_message):
         self.messages.remove(self.Messages.text == text_message)
