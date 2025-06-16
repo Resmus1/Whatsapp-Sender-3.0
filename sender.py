@@ -1,7 +1,8 @@
-from playwright.sync_api import Playwright
+from playwright.sync_api import Playwright, TimeoutError 
 from database import db
 from logger import logger
 import random
+import time
 
 
 def open_whatsapp(playwright: Playwright):
@@ -20,7 +21,7 @@ def open_whatsapp(playwright: Playwright):
     return page
 
 
-def send_message(contact, picture_path, page,):
+def send_message(contact, picture_path, page, processing_time):
     search_box = page.get_by_role(
         "textbox", name="Поиск по имени или номеру")
 
@@ -40,8 +41,7 @@ def send_message(contact, picture_path, page,):
     text_field = page.get_by_role("textbox", name="Введите сообщение")
     send_button = page.get_by_role("button", name="Отправить")
 
-    say_hello(page, contact, text_field, send_button)
-    processed_message(page, contact, picture_path, text_field, send_button)
+    processed_messages(page, contact, text_field, picture_path, send_button, processing_time)
 
     # page.get_by_role("button", name="Отправить").click()
     logger.info("Сообщение отправлено")
@@ -68,14 +68,15 @@ def say_hello(page, contact, text_field, send_button):
         text_field.click()
         text_field.type(hello)
         # send_button.click()
-        page.wait_for_timeout(random.randint(3000, 5000))
+        # page.wait_for_selector('span[aria-live="polite"]:has-text("непрочитанное сообщение")', timeout=15000)
+        # page.wait_for_timeout(random.randint(3000, 15000))
     except Exception as e:
         logger.error(f"Ошибка при отправке приветствия: {e}")
         page.screenshot(path=f"logs/errors/{contact.phone}.png")
 
 
-def processed_message(page, contact, picture_path, text_field, send_button):
-    logger.debug("Обработка сообщения")
+def sending_message(page, contact, picture_path, text_field, send_button):
+    logger.debug("Отправка сообщения")
     text_message = random.choice(db.get_messages(category='info')).text
     if picture_path is not None:
         try:
@@ -102,6 +103,65 @@ def processed_message(page, contact, picture_path, text_field, send_button):
             logger.error(f"Ошибка при отправке приветствия: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")
             db.update_status(contact.phone, "error")
+
+
+def processed_messages(page, contact, text_field, picture_path, send_button, processing_time):
+    logger.debug("Обработка сообщений")
+    start_time = time.time()
+    logger.info(f"Время обработки: {processing_time} секунд")
+    deadline = start_time + processing_time
+
+    say_hello(page, contact, text_field, send_button)
+
+    try:
+        logger.debug(f"Дедлайн: {deadline}, текущее время: {time.time()}, осталось: {round(deadline - time.time(), 2)} сек")
+        wait_for_new_message(page,deadline)
+
+        logger.debug(f"Ответ получен отправка следующего сообщения")
+        page.wait_for_timeout(random.randint(1000, 3000))
+
+    except TimeoutError:
+        logger.debug("Ответ не получен, отправка следующего сообщения")
+
+    finally:
+        sending_message(page, contact, picture_path, text_field, send_button)
+        remaining_time = processing_time - (time.time() - start_time)
+        logger.debug(f"Оставшееся время обработки: {remaining_time:.2f} секунд")
+        if remaining_time > 0:
+            time.sleep(remaining_time)
+
+
+def wait_for_new_message(page, deadline, poll_interval=0.2):
+    logger.debug("Подсчет входящих сообщений")
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    page.wait_for_timeout(2000)
+    locator = page.locator("div.x3psx0u.xwib8y2.x1c1uobl.xrmvbpv >> .x1n2onr6")
+
+    try:
+        start_count = locator.count()
+    except Exception as e:
+        logger.warning(f"Ошибка при подсчете начального количества сообщений: {e}")
+        start_count = 0
+
+    logger.debug(f"Начальное количество сообщений: {start_count}")
+
+    if deadline - time.time() < 5:
+        logger.debug("До дедлайна осталось меньше 5 секунд — пропускаем ожидание")
+        return start_count
+
+    while time.time() < deadline - 5:
+        try:
+            current_count = locator.count()
+            print(current_count)
+            if current_count > start_count:
+                logger.debug(f"Новое сообщение получено: {current_count} (было {start_count})")
+                return current_count
+        except Exception as e:
+            logger.debug(f"Ошибка при проверке количества сообщений: {e}")
+        time.sleep(poll_interval)
+
+    logger.debug(f"Сообщения не изменились за отведённое время (осталось: {round(deadline - time.time(), 1)} сек)")
+
 
 
 def check_name(page, contact):

@@ -49,7 +49,7 @@ def init_session():
 
     g.processed_numbers = get_processed_numbers(
         g.data, session["selected_category"])
-    g.length = len( g.processed_numbers)
+    g.length = len(g.processed_numbers)
     g.length_messages = db.count_messages()
 
 
@@ -86,24 +86,33 @@ def get_index_message(index_message):
     return messages[index_message].text
 
 
-def processing_cycle(page, picture_path, pending_contacts, count):
+def processing_cycle(page, picture_path, pending_contacts):
     logger.debug("Запуск цикла обработки")
     start_time = time.time()
-    pauses = random_pauses(3600, count - 1, 120, 300)
-    logger.info(f"Генерация {len(pauses)} пауз: {pauses}")
+    count_messages = len(pending_contacts)
+    logger.debug(f"Количество контактов: {count_messages}")
+
+    pauses = random_pauses(
+        total_time_sec=3600,
+        num_contacts=count_messages,
+        wait_min=60,
+        wait_max=300,
+        response_ratio=0.3,
+    )
+    logger.info(f"Генерация {len(pauses)} пауз, суммарное время {sum(pauses)}: {pauses}")
 
     for i, contact in enumerate(pending_contacts, 1):
-        logger.info(f"[{i}/{count}] Обработка контакта: {contact.phone}")
+        processing_time = pauses[i - 1]
+        logger.info(
+            f"[{i}/{count_messages}] Обработка контакта: {contact.phone}")
         send_message(
             contact,
             picture_path,
             page,
+            processing_time
         )
-        if i != count:
-            logger.info(f"Осталось отправить {count - i} сообщений")
-            pause = pauses[i - 1]
-            logger.info(f"Пауза {pause} секунд")
-            time.sleep(pause)
+        if i != count_messages:
+            logger.info(f"Осталось отправить {count_messages - i} сообщений")
 
     elapsed_time = time.time() - start_time
     logger.debug(f"Обработка завершена за {elapsed_time} секунд")
@@ -115,14 +124,35 @@ def processing_cycle(page, picture_path, pending_contacts, count):
         time.sleep(remaining)
         logger.debug("Цикл обработки завершён")
 
+def random_pauses(total_time_sec, num_contacts, wait_min, wait_max, response_ratio=0.3):
+    if num_contacts < 1:
+        return []
+    
+    expected_responses = int(num_contacts * response_ratio)
+    no_response = num_contacts - expected_responses
 
-def random_pauses(total, n, min_pause=30, max_pause=300):
-    weights = [random.uniform(min_pause, max_pause) for _ in range(n)]
-    factor = total / sum(weights)
-    return [int(w * factor) for w in weights]
+    total_response_wait = expected_responses * random.randint(1, 3)
+    total_no_response_wait = no_response * random.randint(10, 15)
+
+    time_left_for_pauses = total_time_sec - total_response_wait - total_no_response_wait
+
+    if num_contacts == 1:
+        return []
+
+    pauses = []
+    for _ in range(num_contacts - 1):
+        pauses.append(random.randint(wait_min, wait_max))
+
+    current_sum = sum(pauses)
+
+    scale = time_left_for_pauses / current_sum if current_sum else 1
+    adjusted_pauses = [int(p * scale) for p in pauses]
+
+    return adjusted_pauses
 
 
-def split_contacts(contacts, min_size=15, max_size=20):
+
+def split_contacts(contacts, min_size=5, max_size=15):
     logger.debug("Разделение контактов на списки")
     chunks = []
     i = 0

@@ -25,9 +25,6 @@ def send_pending_contacts():
         logger.info("Нет ожидающих контактов для отправки сообщений")
         return "Нет ожидающих контактов для отправки сообщений"
 
-    count = min(random.randint(15, 20), len(pending_contacts))
-    logger.info(f"Запуск обработки {count} сообщений")
-
     with sync_playwright() as playwright:
         page = open_whatsapp(playwright)
         try:
@@ -41,7 +38,7 @@ def send_pending_contacts():
                 logger.info(
                     f"[{i}/{len(lists_pending_contacts)}] Запуск цикла обработки списка контактов")
                 processing_cycle(
-                    page, picture_path, list_pending_contacts, count)
+                    page, picture_path, list_pending_contacts)
 
             g.data = db.get_all_users()
             if all(contact.status == "sent" for contact in g.data):
