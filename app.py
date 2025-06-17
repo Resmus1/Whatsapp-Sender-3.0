@@ -116,6 +116,12 @@ def set_category():
         session["selected_category"] = selected
     return go_home_page("Категория изменена")
 
+@app.route("/delete_category", methods=["POST"])
+def delete_category():
+    db.delete_contacts_by_category(session["selected_category"])
+    logger.info(f"Категория удалена: {session['selected_category']}")
+    return go_home_page("Категория удалена")
+
 
 @app.route('/change_status', methods=['POST'])
 def change_status_route():

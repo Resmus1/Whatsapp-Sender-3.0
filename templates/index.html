@@ -101,7 +101,10 @@
 <div class="mt-2">
     <span class="badge bg-info">Количество: {{ g.length }}</span>
 </div>
-
+<form action="/delete_category" method="post" id="deleteCategoryForm">
+    <button type="submit" class="btn btn-danger w-100">🗑 Удалить категорию</button>
+</form>
+    
 {% endblock %}
 
 {% block picture %}

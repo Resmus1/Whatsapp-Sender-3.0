@@ -53,6 +53,9 @@ class Database:
 
     def get_phones_by_category(self, category):
         return [contact for contact in self.get_all_users() if contact.category == category]
+    
+    def delete_contacts_by_category(self, category):
+        self.contacts.remove(self.Contacts.category == category)
 
     # ===== Message =====
 
