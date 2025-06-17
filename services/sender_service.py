@@ -1,6 +1,5 @@
 from flask import Flask, g, session
 from logger import logger
-import random
 import os
 from pathlib import Path
 from config import Config

@@ -114,7 +114,6 @@ def processed_messages(page, contact, text_field, picture_path, send_button, pro
     say_hello(page, contact, text_field, send_button)
 
     try:
-        logger.debug(f"Дедлайн: {deadline}, текущее время: {time.time()}, осталось: {round(deadline - time.time(), 2)} сек")
         wait_for_new_message(page,deadline)
 
         logger.debug(f"Ответ получен отправка следующего сообщения")
@@ -132,10 +131,9 @@ def processed_messages(page, contact, text_field, picture_path, send_button, pro
 
 
 def wait_for_new_message(page, deadline, poll_interval=0.2):
-    logger.debug("Подсчет входящих сообщений")
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    page.wait_for_timeout(2000)
-    locator = page.locator("div.x3psx0u.xwib8y2.x1c1uobl.xrmvbpv >> .x1n2onr6")
+    page.wait_for_timeout(10000)
+    logger.debug("Поиск входящих сообщений")
+    locator = page.locator("div.message-in.focusable-list-item._amjy._amjz._amjw.x1klvx2g.xahtqtb")
 
     try:
         start_count = locator.count()
@@ -152,7 +150,6 @@ def wait_for_new_message(page, deadline, poll_interval=0.2):
     while time.time() < deadline - 5:
         try:
             current_count = locator.count()
-            print(current_count)
             if current_count > start_count:
                 logger.debug(f"Новое сообщение получено: {current_count} (было {start_count})")
                 return current_count
