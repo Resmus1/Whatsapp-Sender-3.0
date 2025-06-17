@@ -17,7 +17,7 @@ def open_whatsapp(playwright: Playwright):
         ]
     )
     page = browser.pages[0] if browser.pages else browser.new_page()
-    page.goto("https://web.whatsapp.com/", timeout=60000)
+    enter_whatsapp(page)
     return page
 
 
@@ -41,8 +41,14 @@ def send_message(contact, picture_path, page, processing_time):
     text_field = page.get_by_role("textbox", name="Введите сообщение")
     send_button = page.get_by_role("button", name="Отправить")
 
-    processed_messages(page, contact, text_field,
-                       picture_path, send_button, processing_time)
+    processed_messages(
+        page, contact, text_field,
+        picture_path, send_button, processing_time
+    )
+
+    page.wait_for_timeout(1000)
+    search_box.press("Escape")
+    page.wait_for_timeout(1000)
 
     # page.get_by_role("button", name="Отправить").click()
     logger.info("Сообщение отправлено")
@@ -179,6 +185,19 @@ def check_name(page, contact):
         db.update_status(contact.phone, "error")
         return False
 
+
+def enter_whatsapp(page):
+    logger.debug("Вход в WhatsApp")
+    page.goto("https://web.whatsapp.com/")
+    while True:
+        try:
+            logger.debug("Подтверждение входа")
+            page.wait_for_selector("div.x78zum5.xdt5ytf.x5yr21d", timeout=60000)
+            return page
+        except TimeoutError:
+            logger.debug("Подтверждение входа не получено, повторная попытка")
+        
+    
 
 def close_browser(playwright):
     playwright.stop()
