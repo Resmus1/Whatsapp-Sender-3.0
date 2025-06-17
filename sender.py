@@ -1,4 +1,4 @@
-from playwright.sync_api import Playwright, TimeoutError 
+from playwright.sync_api import Playwright, TimeoutError
 from database import db
 from logger import logger
 import random
@@ -41,7 +41,8 @@ def send_message(contact, picture_path, page, processing_time):
     text_field = page.get_by_role("textbox", name="Введите сообщение")
     send_button = page.get_by_role("button", name="Отправить")
 
-    processed_messages(page, contact, text_field, picture_path, send_button, processing_time)
+    processed_messages(page, contact, text_field,
+                       picture_path, send_button, processing_time)
 
     # page.get_by_role("button", name="Отправить").click()
     logger.info("Сообщение отправлено")
@@ -114,7 +115,7 @@ def processed_messages(page, contact, text_field, picture_path, send_button, pro
     say_hello(page, contact, text_field, send_button)
 
     try:
-        wait_for_new_message(page,deadline)
+        wait_for_new_message(page, deadline)
 
         logger.debug(f"Ответ получен отправка следующего сообщения")
         page.wait_for_timeout(random.randint(1000, 3000))
@@ -125,7 +126,8 @@ def processed_messages(page, contact, text_field, picture_path, send_button, pro
     finally:
         sending_message(page, contact, picture_path, text_field, send_button)
         remaining_time = processing_time - (time.time() - start_time)
-        logger.debug(f"Оставшееся время обработки: {remaining_time:.2f} секунд")
+        logger.debug(
+            f"Оставшееся время обработки: {remaining_time:.2f} секунд")
         if remaining_time > 0:
             time.sleep(remaining_time)
 
@@ -133,32 +135,36 @@ def processed_messages(page, contact, text_field, picture_path, send_button, pro
 def wait_for_new_message(page, deadline, poll_interval=0.2):
     page.wait_for_timeout(10000)
     logger.debug("Поиск входящих сообщений")
-    locator = page.locator("div.message-in.focusable-list-item._amjy._amjz._amjw.x1klvx2g.xahtqtb")
+    locator = page.locator(
+        "div.message-in.focusable-list-item._amjy._amjz._amjw.x1klvx2g.xahtqtb")
 
     try:
         start_count = locator.count()
     except Exception as e:
-        logger.warning(f"Ошибка при подсчете начального количества сообщений: {e}")
+        logger.warning(
+            f"Ошибка при подсчете начального количества сообщений: {e}")
         start_count = 0
 
     logger.debug(f"Начальное количество сообщений: {start_count}")
 
     if deadline - time.time() < 5:
-        logger.debug("До дедлайна осталось меньше 5 секунд — пропускаем ожидание")
+        logger.debug(
+            "До дедлайна осталось меньше 5 секунд — пропускаем ожидание")
         return start_count
 
     while time.time() < deadline - 5:
         try:
             current_count = locator.count()
             if current_count > start_count:
-                logger.debug(f"Новое сообщение получено: {current_count} (было {start_count})")
+                logger.debug(
+                    f"Новое сообщение получено: {current_count} (было {start_count})")
                 return current_count
         except Exception as e:
             logger.debug(f"Ошибка при проверке количества сообщений: {e}")
         time.sleep(poll_interval)
 
-    logger.debug(f"Сообщения не изменились за отведённое время (осталось: {round(deadline - time.time(), 1)} сек)")
-
+    logger.debug(
+        f"Сообщения не изменились за отведённое время (осталось: {round(deadline - time.time(), 1)} сек)")
 
 
 def check_name(page, contact):

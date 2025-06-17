@@ -13,7 +13,7 @@ def save_image_file(upload_file: FileStorage) -> str:
     if upload_file and upload_file.filename.endswith(".jpg"):
         upload_path = Path(Config.UPLOAD_FOLDER) / Config.PICTURE_FILENAME
         upload_file.save(upload_path)
-    
+
     else:
         return "Неподдерживаемый формат файла. Только jpg"
 
@@ -28,10 +28,10 @@ def contacts_file_processing(upload_file: FileStorage) -> str:
 
         if ext == "txt":
             lines = [row.strip()
-                        for row in content.split('\n') if row.strip()]
+                     for row in content.split('\n') if row.strip()]
             status = save_numbers(lines, file_name)
             return status
-        
+
         elif ext == "json":
             data = json.loads(content)
             save_numbers_json(data, file_name)
@@ -73,6 +73,7 @@ def handle_text_action(action: str) -> str:
         return "Текст сообщения удален"
     return "Нет действия или неизвестная команда"
 
+
 def read_uploaded_file(upload_file: FileStorage) -> str:
     return upload_file.read().decode("utf-8")
 
@@ -91,6 +92,7 @@ def save_numbers(numbers: list[str], category: str) -> str:
 
     return f"Загружено {added} новых контактов. {skipped} контактов уже существуют."
 
+
 def save_numbers_json(data, category: str) -> str:
     added, skipped = 0, 0
 
@@ -98,7 +100,8 @@ def save_numbers_json(data, category: str) -> str:
         name = contact_data["name"]
         whatsapp = contact_data["socials"]["WhatsApp"]
         for i, phone_number in enumerate(whatsapp):
-            contact = Contact(phone=phone_number, name=name if i == 0 else name + str(i), category=category)
+            contact = Contact(phone=phone_number, name=name if i ==
+                              0 else name + str(i), category=category)
             if db.add_user(contact):
                 added += 1
             else:

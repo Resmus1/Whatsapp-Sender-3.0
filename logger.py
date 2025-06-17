@@ -31,7 +31,7 @@ file_formatter = logging.Formatter(
 )
 
 file_handler = RotatingFileHandler(
-    os.path.join(log_dir, "app.log"), 
+    os.path.join(log_dir, "app.log"),
     maxBytes=1_000_000,
     backupCount=3,
     encoding="utf-8",

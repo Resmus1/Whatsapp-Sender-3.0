@@ -18,7 +18,8 @@ def send_pending_contacts():
         c for c in g.filtered_contacts if c.status == "pending"]
     lists_pending_contacts = split_contacts(pending_contacts)
     logger.info(f"Количество ожидающих контактов: {len(pending_contacts)}")
-    logger.debug(f"Количество списков ожидающих контактов: {len(lists_pending_contacts)}")
+    logger.debug(
+        f"Количество списков ожидающих контактов: {len(lists_pending_contacts)}")
 
     if not pending_contacts:
         logger.info("Нет ожидающих контактов для отправки сообщений")
@@ -27,7 +28,8 @@ def send_pending_contacts():
     with sync_playwright() as playwright:
         page = open_whatsapp(playwright)
         try:
-            picture_path = Path(app.config["UPLOAD_FOLDER"]) / "PICTURE_FILENAME"
+            picture_path = Path(
+                app.config["UPLOAD_FOLDER"]) / "PICTURE_FILENAME"
             if os.path.isfile(picture_path):
                 picture_path = str(picture_path)
             else:

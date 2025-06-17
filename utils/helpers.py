@@ -99,7 +99,8 @@ def processing_cycle(page, picture_path, pending_contacts):
         wait_max=300,
         response_ratio=0.3,
     )
-    logger.info(f"Генерация {len(pauses)} пауз, суммарное время {sum(pauses)}: {pauses}")
+    logger.info(
+        f"Генерация {len(pauses)} пауз, суммарное время {sum(pauses)}: {pauses}")
 
     for i, contact in enumerate(pending_contacts, 1):
         processing_time = pauses[i - 1]
@@ -124,17 +125,19 @@ def processing_cycle(page, picture_path, pending_contacts):
         time.sleep(remaining)
         logger.debug("Цикл обработки завершён")
 
+
 def random_pauses(total_time_sec, num_contacts, wait_min, wait_max, response_ratio=0.3):
     if num_contacts < 1:
         return []
-    
+
     expected_responses = int(num_contacts * response_ratio)
     no_response = num_contacts - expected_responses
 
     total_response_wait = expected_responses * random.randint(1, 3)
     total_no_response_wait = no_response * random.randint(10, 15)
 
-    time_left_for_pauses = total_time_sec - total_response_wait - total_no_response_wait
+    time_left_for_pauses = total_time_sec - \
+        total_response_wait - total_no_response_wait
 
     if num_contacts == 1:
         return []
@@ -149,7 +152,6 @@ def random_pauses(total_time_sec, num_contacts, wait_min, wait_max, response_rat
     adjusted_pauses = [int(p * scale) for p in pauses]
 
     return adjusted_pauses
-
 
 
 def split_contacts(contacts, min_size=5, max_size=15):
