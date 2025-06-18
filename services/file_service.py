@@ -27,8 +27,10 @@ def contacts_file_processing(upload_file: FileStorage) -> str:
         content = read_uploaded_file(upload_file)
 
         if ext == "txt":
-            lines = [row.strip()
-                     for row in content.split('\n') if row.strip()]
+            lines = [
+                row.strip()
+                for row in content.split('\n') if row.strip()
+            ]
             status = save_numbers(lines, file_name)
             return status
 
@@ -37,7 +39,7 @@ def contacts_file_processing(upload_file: FileStorage) -> str:
             save_numbers_json(data, file_name)
             return None
 
-    return "Неподдерживаемый формат файла. Только txt и csv"
+    return "Неподдерживаемый формат файла. Только txt и json"
 
 
 def handle_text_file(upload_file: FileStorage) -> str:

@@ -31,8 +31,6 @@ def send_message(contact, picture_path, page, processing_time):
         logger.error("Контакт не найден")
         page.screenshot(path=f"logs/errors/{contact.phone}.png")
         db.update_status(contact.phone, "error")
-        search_box.press("Escape")
-        page.wait_for_timeout(1000)
         return
 
     if contact.name == None:
@@ -46,13 +44,7 @@ def send_message(contact, picture_path, page, processing_time):
         picture_path, send_button, processing_time
     )
 
-    page.wait_for_timeout(1000)
-    search_box.press("Escape")
-    page.wait_for_timeout(1000)
-
-    # page.get_by_role("button", name="Отправить").click()
     logger.info("Сообщение отправлено")
-    page.wait_for_timeout(1000)
     db.update_status(contact.phone, "sent")
 
 
@@ -74,9 +66,7 @@ def say_hello(page, contact, text_field, send_button):
     try:
         text_field.click()
         text_field.type(hello)
-        # send_button.click()
-        # page.wait_for_selector('span[aria-live="polite"]:has-text("непрочитанное сообщение")', timeout=15000)
-        # page.wait_for_timeout(random.randint(3000, 15000))
+        send_button.click()
     except Exception as e:
         logger.error(f"Ошибка при отправке приветствия: {e}")
         page.screenshot(path=f"logs/errors/{contact.phone}.png")
@@ -95,7 +85,7 @@ def sending_message(page, contact, picture_path, text_field, send_button):
             text_field = page.get_by_role("textbox", name="Добавьте подпись")
             text_field.click()
             text_field.type(text_message)
-            # send_button.click()
+            send_button.click()
         except Exception as e:
             logger.error(f"Ошибка при отправки изображения: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")
@@ -105,7 +95,7 @@ def sending_message(page, contact, picture_path, text_field, send_button):
         try:
             text_field.click()
             text_field.type(text_message)
-            # send_button.click()
+            send_button.click()
         except Exception as e:
             logger.error(f"Ошибка при отправке приветствия: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")
@@ -121,10 +111,12 @@ def processed_messages(page, contact, text_field, picture_path, send_button, pro
     say_hello(page, contact, text_field, send_button)
 
     try:
-        wait_for_new_message(page, deadline)
-
-        logger.debug(f"Ответ получен отправка следующего сообщения")
-        page.wait_for_timeout(random.randint(1000, 3000))
+        answer = wait_for_new_message(page, deadline)
+        if answer:
+            logger.debug(f"Ответ получен отправка следующего сообщения")
+            page.wait_for_timeout(random.randint(1000, 3000))
+        else:
+            logger.debug("Дедлайн истек, отправка следующего сообщения")
 
     except TimeoutError:
         logger.debug("Ответ не получен, отправка следующего сообщения")
@@ -156,7 +148,7 @@ def wait_for_new_message(page, deadline, poll_interval=0.2):
     if deadline - time.time() < 5:
         logger.debug(
             "До дедлайна осталось меньше 5 секунд — пропускаем ожидание")
-        return start_count
+        return False
 
     while time.time() < deadline - 5:
         try:
@@ -164,7 +156,7 @@ def wait_for_new_message(page, deadline, poll_interval=0.2):
             if current_count > start_count:
                 logger.debug(
                     f"Новое сообщение получено: {current_count} (было {start_count})")
-                return current_count
+                return True
         except Exception as e:
             logger.debug(f"Ошибка при проверке количества сообщений: {e}")
         time.sleep(poll_interval)
