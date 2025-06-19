@@ -6,7 +6,7 @@ from config import Config
 from utils import split_contacts, processing_cycle
 from playwright.sync_api import sync_playwright
 from database import db
-from browser import open_whatsapp
+from browser import open_whatsapp_profile
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -26,7 +26,7 @@ def send_pending_contacts():
         return "Нет ожидающих контактов для отправки сообщений"
 
     with sync_playwright() as playwright:
-        page = open_whatsapp(playwright)
+        page = open_whatsapp_profile(playwright, 'profile')
         try:
             picture_path = Path(
                 app.config["UPLOAD_FOLDER"]) / "PICTURE_FILENAME"

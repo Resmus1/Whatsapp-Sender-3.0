@@ -1,10 +1,11 @@
 from playwright.sync_api import Playwright
 from logger import logger
 
-def open_whatsapp(playwright: Playwright):
+
+def open_whatsapp_profile(playwright: Playwright, profile_name):
     logger.debug("Открытие браузера")
     browser = playwright.chromium.launch_persistent_context(
-        user_data_dir="profile",
+        user_data_dir=f"browser/profiles/{profile_name}",
         headless=False,
         args=[
             "--disable-application-cache",
@@ -16,13 +17,15 @@ def open_whatsapp(playwright: Playwright):
     enter_whatsapp(page)
     return page
 
+
 def enter_whatsapp(page):
     logger.debug("Вход в WhatsApp")
     page.goto("https://web.whatsapp.com/")
     while True:
         try:
             logger.debug("Подтверждение входа")
-            page.wait_for_selector("div.x78zum5.xdt5ytf.x5yr21d", timeout=60000)
+            page.wait_for_selector(
+                "div.x78zum5.xdt5ytf.x5yr21d", timeout=60000)
             return page
         except TimeoutError:
             logger.debug("Подтверждение входа не получено, повторная попытка")

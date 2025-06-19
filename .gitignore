@@ -7,5 +7,7 @@
 /utils/__pycache__
 /database/__pycache__
 /browser/__pycache__
+/browser/profiles/*
+!/browser/profiles/.gitkeep
 picture.jpg
 database.json
