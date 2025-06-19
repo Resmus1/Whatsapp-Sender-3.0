@@ -1,5 +1,5 @@
 from tinydb import TinyDB, Query
-from database.models import Contact, Message
+from database.models import Contact, Message, Profile
 import json
 from logger import logger
 
@@ -9,8 +9,10 @@ class Database:
         self.db = TinyDB(path)
         self.contacts = self.db.table('contacts')
         self.messages = self.db.table('messages')
+        self.profiles = self.db.table('profiles')
         self.Contacts = Query()
         self.Messages = Query()
+        self.Profiles = Query()
 
     # ===== Contact =====
 
@@ -53,7 +55,7 @@ class Database:
 
     def get_phones_by_category(self, category):
         return [contact for contact in self.get_all_users() if contact.category == category]
-    
+
     def delete_contacts_by_category(self, category):
         self.contacts.remove(self.Contacts.category == category)
 
@@ -96,6 +98,27 @@ class Database:
 
     def delete_message(self, text_message):
         self.messages.remove(self.Messages.text == text_message)
+
+    # ===== Profile =====
+
+    def add_profile(self, name: str) -> bool:
+        profile = Profile(name)
+        try:
+            if not self.profiles.contains(self.Profiles.name == profile.name):
+                self.profiles.insert(profile.to_dict())
+                logger.info(f"Добавлен профиль: {profile.name}")
+                return True
+            else:
+                logger.info(f"Профиль уже существует: {profile.name}")
+        except Exception as e:
+            logger.exception(f"Ошибка при добавлении профиля: {e}")
+        return False
+
+    def get_profiles(self):
+        try:
+            return [Profile.from_dict(profile) for profile in self.db.table('profiles').all()]
+        except json.JSONDecodeError:
+            return []
 
 
 db = Database()

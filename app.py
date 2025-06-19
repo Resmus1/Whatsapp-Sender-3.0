@@ -116,6 +116,7 @@ def set_category():
         session["selected_category"] = selected
     return go_home_page("Категория изменена")
 
+
 @app.route("/delete_category", methods=["POST"])
 def delete_category():
     db.delete_contacts_by_category(session["selected_category"])
@@ -152,6 +153,15 @@ def add_number():
         session["selected_category"] = "Без категории"
     add_number_to_db(phone, session["selected_category"])
     return go_home_page(f"{phone} добавлен.")
+
+
+@app.route("/create_profile", methods=["POST"])
+def create_profile():
+    name = request.form.get("profile_name")
+    print(name)
+    db.add_profile(name)
+    logger.info(f"Создан профиль: {name}")
+    return go_home_page("Профиль создан.")
 
 
 if __name__ == "__main__":

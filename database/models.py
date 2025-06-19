@@ -32,3 +32,15 @@ class Message:
     @staticmethod
     def from_dict(data):
         return Message(data['text'], data.get('category'))
+
+
+class Profile:
+    def __init__(self, name):
+        self.name = name
+
+    def to_dict(self):
+        return {"name": self.name}
+    
+    @staticmethod
+    def from_dict(data):
+        return Profile(data["name"])

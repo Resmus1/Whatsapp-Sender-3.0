@@ -49,8 +49,14 @@
             </form>
         </div>
         <div>
-            <p class="m-0">Выбор профиля:</p>
-            
+            <form action="/create_profile" method="post">
+                <label for="profile_name" class="form-label">Добавить профиль:</label>
+                <div class="input-group">
+                    <input type="text" name="profile_name" id="profile_name" class="form-control" placeholder="Имя профиля"
+                        required></label>
+                    <button type="submit" class="btn btn-success">Добавить</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -105,7 +111,7 @@
 <form action="/delete_category" method="post" id="deleteCategoryForm">
     <button type="submit" class="btn btn-danger w-100">🗑 Удалить категорию</button>
 </form>
-    
+
 {% endblock %}
 
 {% block picture %}

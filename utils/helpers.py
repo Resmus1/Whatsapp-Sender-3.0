@@ -34,6 +34,7 @@ def counter_statuses(contacts, selected_category=None):
 
 def init_session():
     session["image_directory_path"] = read_image()
+    session["browser_profile"] = session.get("browser_profile", "")
     session["text_message"] = session.get("text_message", "")
     session["categories"] = db.get_phones_categories()
     session["selected_category"] = session.get("selected_category", None)
