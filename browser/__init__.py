@@ -1,0 +1,1 @@
+from .browser import open_whatsapp

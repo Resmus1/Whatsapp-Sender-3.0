@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 from config import Config
 from utils import split_contacts, processing_cycle
-from sender import open_whatsapp
 from playwright.sync_api import sync_playwright
 from database import db
+from browser import open_whatsapp
 
 app = Flask(__name__)
 app.config.from_object(Config)
