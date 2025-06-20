@@ -118,5 +118,9 @@ class Database:
         except json.JSONDecodeError:
             return []
 
+    def delete_profile(self, name):
+        self.profiles.remove(self.Profiles.name == name)
+        logger.info(f"Профиль удален: {name}")
+
 
 db = Database()

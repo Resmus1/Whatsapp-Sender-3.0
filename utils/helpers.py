@@ -33,13 +33,13 @@ def counter_statuses(contacts, selected_category=None):
 
 
 def init_session():
-    session.setdefault("image_directory_path", read_image())
-    session.setdefault("browser_profiles", db.get_name_profiles())
-    session.setdefault("selected_profile", None)
-    session.setdefault("text_message", "")
-    session.setdefault("categories", db.get_phones_categories())
-    session.setdefault("selected_category", None)
-    session.setdefault("position_message", 0)
+    session["image_directory_path"] = read_image()
+    session["browser_profiles"] = db.get_name_profiles()
+    session["selected_profile"] = session.get("selected_profile", None)
+    session["text_message"] = session.get("text_message", "")
+    session["categories"] = db.get_phones_categories()
+    session["selected_category"] = session.get("selected_category", None)
+    session["position_message"] = session.get("position_message", 0)
 
     g.data = db.get_all_users() or []
 

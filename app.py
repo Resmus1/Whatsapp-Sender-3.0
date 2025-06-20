@@ -24,10 +24,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 @app.before_request
 def before():
-    try:
-        init_session()
-    except Exception as e:
-        logger.exception("Ошибка при инициализации сессии")
+    init_session()
 
 
 @atexit.register
@@ -39,7 +36,6 @@ def on_exit():
 def reset_statuses():
     logger.info("Сброс статусов пользователей")
     db.reset_sent_statuses(session["selected_category"])
-    g.data = db.get_all_users()
     session["statuses"] = counter_statuses(g.data)
 
     return go_home_page("Статусы сброшены")
@@ -161,7 +157,6 @@ def create_profile():
     if name:
         db.add_profile(name)
         logger.info(f"Создан профиль: {name}")
-        session["browser_profiles"] = db.get_name_profiles()
     return go_home_page("Профиль создан.")
 
 
@@ -175,6 +170,12 @@ def set_profile():
         return go_home_page(f"Профиль выбран: {selected}")
     else:
         return go_home_page("Профиль не найден.")
+
+
+@app.route("/delete_profile", methods=["POST"])
+def delete_profile():
+    db.delete_profile(session["selected_profile"])
+    return go_home_page("Профиль удален")
 
 
 if __name__ == "__main__":
