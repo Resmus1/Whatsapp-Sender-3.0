@@ -23,9 +23,11 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 
 @app.before_request
-def before_request():
-    init_session()
-    logger.debug(f"Обработка запроса: {request.method} {request.path}")
+def before():
+    try:
+        init_session()
+    except Exception as e:
+        logger.exception("Ошибка при инициализации сессии")
 
 
 @atexit.register
@@ -43,30 +45,28 @@ def reset_statuses():
     return go_home_page("Статусы сброшены")
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
     logger.debug("Отрисовка главной страницы")
     message = request.args.get("message")
     if message:
         logger.debug(f"[UI MESSAGE] {message}")
 
-    categories = db.get_phones_categories()
-    selected_category = session.get('selected_category')
-    current_image_url = session.get('current_image_url')
-
     return render_template(
         'index.html',
-        categories=categories,
-        message=message,
-        selected_category=selected_category,
-        current_image_url=current_image_url,
+        categories=session["categories"],
+        browser_profiles=session["browser_profiles"],
+        selected_profile=session.get("selected_profile", ""),
+        selected_category=session.get("selected_category"),
+        current_image_url=session.get("current_image_url"),
         image_directory_path=session["image_directory_path"],
+        message=message,
+        position_message=session["position_message"],
+        sent_message=session["text_message"],
         length=g.length,
         length_messages=g.length_messages,
-        position_message=session.get("position_message", 0),
-        sent_message=session.get("text_message"),
         numbers=g.processed_numbers,
-        **counter_statuses(g.data, selected_category)
+        **counter_statuses(g.data, session["selected_category"])
     )
 
 
@@ -158,10 +158,23 @@ def add_number():
 @app.route("/create_profile", methods=["POST"])
 def create_profile():
     name = request.form.get("profile_name")
-    print(name)
-    db.add_profile(name)
-    logger.info(f"Создан профиль: {name}")
+    if name:
+        db.add_profile(name)
+        logger.info(f"Создан профиль: {name}")
+        session["browser_profiles"] = db.get_name_profiles()
     return go_home_page("Профиль создан.")
+
+
+@app.route("/set_profile", methods=["POST"])
+def set_profile():
+    selected = request.form.get("profile")
+    logger.info(f"Выбран профиль: {selected}")
+
+    if selected in session.get("browser_profiles", []):
+        session["selected_profile"] = selected
+        return go_home_page(f"Профиль выбран: {selected}")
+    else:
+        return go_home_page("Профиль не найден.")
 
 
 if __name__ == "__main__":

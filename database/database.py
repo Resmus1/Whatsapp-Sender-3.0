@@ -53,9 +53,6 @@ class Database:
     def get_phones_categories(self):
         return list(set(contact.category for contact in self.get_all_users()))
 
-    def get_phones_by_category(self, category):
-        return [contact for contact in self.get_all_users() if contact.category == category]
-
     def delete_contacts_by_category(self, category):
         self.contacts.remove(self.Contacts.category == category)
 
@@ -114,9 +111,10 @@ class Database:
             logger.exception(f"Ошибка при добавлении профиля: {e}")
         return False
 
-    def get_profiles(self):
+    def get_name_profiles(self):
         try:
-            return [Profile.from_dict(profile) for profile in self.db.table('profiles').all()]
+            profiles = self.db.table('profiles').all()
+            return [profile.get("name") for profile in profiles]
         except json.JSONDecodeError:
             return []
 

@@ -33,12 +33,14 @@ def counter_statuses(contacts, selected_category=None):
 
 
 def init_session():
-    session["image_directory_path"] = read_image()
-    session["browser_profile"] = session.get("browser_profile", "")
-    session["text_message"] = session.get("text_message", "")
-    session["categories"] = db.get_phones_categories()
-    session["selected_category"] = session.get("selected_category", None)
-    session["position_message"] = session.get("position_message", 0)
+    session.setdefault("image_directory_path", read_image())
+    session.setdefault("browser_profiles", db.get_name_profiles())
+    session.setdefault("selected_profile", None)
+    session.setdefault("text_message", "")
+    session.setdefault("categories", db.get_phones_categories())
+    session.setdefault("selected_category", None)
+    session.setdefault("position_message", 0)
+
     g.data = db.get_all_users() or []
 
     if session["selected_category"]:
@@ -46,12 +48,12 @@ def init_session():
             c for c in g.data if c.category == session["selected_category"]
         ]
     else:
-        g.filtered_contacts = {}
+        g.filtered_contacts = []
 
-    g.processed_numbers = get_processed_numbers(
-        g.data, session["selected_category"])
+    g.processed_numbers = get_processed_numbers(g.data, session["selected_category"])
     g.length = len(g.processed_numbers)
     g.length_messages = db.count_messages()
+
 
 
 def change_status(phone, status):

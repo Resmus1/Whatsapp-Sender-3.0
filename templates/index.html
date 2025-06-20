@@ -50,12 +50,23 @@
         </div>
         <div>
             <form action="/create_profile" method="post">
-                <label for="profile_name" class="form-label">Добавить профиль:</label>
+                <label for="profile_name" class="form-label">Выбрать профиль:</label>
                 <div class="input-group">
-                    <input type="text" name="profile_name" id="profile_name" class="form-control" placeholder="Имя профиля"
-                        required></label>
+                    <input type="text" name="profile_name" id="profile_name" class="form-control"
+                        placeholder="Имя профиля" required></label>
                     <button type="submit" class="btn btn-success">Добавить</button>
                 </div>
+            </form>
+            <form action="{{ url_for('set_profile') }}" method="post" id="profileForm">
+                <select name="profile" id="profileSelect" class="form-select" required
+                    onchange="document.getElementById('profileForm').submit()">
+                    <option value="" disabled selected hidden>-- Выберите --</option>
+                    {% for profile in browser_profiles %}
+                    <option value="{{ profile }}" {% if profile==selected_profile %}selected{% endif %}>
+                        {{ profile }}
+                    </option>
+                    {% endfor %}
+                </select>
             </form>
         </div>
     </div>
