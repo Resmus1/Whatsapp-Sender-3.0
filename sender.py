@@ -50,7 +50,7 @@ def say_hello(page, contact, text_field, send_button):
     try:
         text_field.click()
         text_field.type(hello)
-        send_button.click()
+        # send_button.click()
     except Exception as e:
         logger.error(f"Ошибка при отправке приветствия: {e}")
         page.screenshot(path=f"logs/errors/{contact.phone}.png")
@@ -69,7 +69,7 @@ def sending_message(page, contact, picture_path, text_field, send_button):
             text_field = page.get_by_role("textbox", name="Добавьте подпись")
             text_field.click()
             text_field.type(text_message)
-            send_button.click()
+            # send_button.click()
         except Exception as e:
             logger.error(f"Ошибка при отправки изображения: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")
@@ -79,7 +79,7 @@ def sending_message(page, contact, picture_path, text_field, send_button):
         try:
             text_field.click()
             text_field.type(text_message)
-            send_button.click()
+            # send_button.click()
         except Exception as e:
             logger.error(f"Ошибка при отправке приветствия: {e}")
             page.screenshot(path=f"logs/errors/{contact.phone}.png")

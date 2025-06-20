@@ -26,7 +26,7 @@ def send_pending_contacts():
         return "Нет ожидающих контактов для отправки сообщений"
 
     with sync_playwright() as playwright:
-        page = open_whatsapp_profile(playwright, 'profile')
+        page = open_whatsapp_profile(playwright, session["selected_profile"])
         try:
             picture_path = Path(
                 app.config["UPLOAD_FOLDER"]) / "PICTURE_FILENAME"

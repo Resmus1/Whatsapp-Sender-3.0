@@ -1,9 +1,13 @@
 from playwright.sync_api import Playwright
+import os
 from logger import logger
 
 
 def open_whatsapp_profile(playwright: Playwright, profile_name):
     logger.debug("Открытие браузера")
+    profile_path = os.path.join("browser/profiles", profile_name)
+    os.makedirs(profile_path, exist_ok=True)
+
     browser = playwright.chromium.launch_persistent_context(
         user_data_dir=f"browser/profiles/{profile_name}",
         headless=False,
