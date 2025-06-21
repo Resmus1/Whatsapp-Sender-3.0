@@ -68,7 +68,15 @@ def index():
 
 @app.route("/start")
 def start():
-    message = sender_service.send_pending_contacts()
+    mode = session.get("mode", "default")
+
+    if mode == "alt":
+        logger.info("Альтернативный запуск")
+        message = sender_service.send_alt_mode()
+    else:
+        logger.info("Стандартный запуск")
+        message = sender_service.send_pending_contacts()
+
     return go_home_page(message)
 
 
@@ -176,6 +184,14 @@ def set_profile():
 def delete_profile():
     db.delete_profile(session["selected_profile"])
     return go_home_page("Профиль удален")
+
+
+@app.route("/toggle_mode", methods=["POST"])
+def toggle_mode():
+    current = session.get("mode", "default")
+    session["mode"] = "alt" if current == "default" else "default"
+    logger.info(f"Режим переключён: {session['mode']}")
+    return go_home_page(f"Режим: {session['mode']}")
 
 
 if __name__ == "__main__":

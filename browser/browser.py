@@ -1,4 +1,4 @@
-from playwright.sync_api import Playwright
+from playwright.sync_api import Playwright, TimeoutError
 import os
 from logger import logger
 
@@ -23,16 +23,17 @@ def open_whatsapp_profile(playwright: Playwright, profile_name):
 
 
 def enter_whatsapp(page):
-    logger.debug("Вход в WhatsApp")
+    logger.debug("Открываю WhatsApp Web...")
     page.goto("https://web.whatsapp.com/")
+
     while True:
         try:
-            logger.debug("Подтверждение входа")
-            page.wait_for_selector(
-                "div.x78zum5.xdt5ytf.x5yr21d", timeout=60000)
+            logger.debug("Пробуем найти элемент, означающий вход...")
+            page.wait_for_selector("div.x78zum5.xdt5ytf.x5yr21d", timeout=60000)
+            logger.info("Авторизация успешна!")
             return page
         except TimeoutError:
-            logger.debug("Подтверждение входа не получено, повторная попытка")
+            logger.debug("Элемент не появился. Повторяем...")
 
 
 def close_browser(playwright):
